@@ -18,6 +18,7 @@ public enum ErrorCode {
     UNAUTHORIZED(1006, "You do not have permission", HttpStatus.FORBIDDEN),
     USER_NOT_FOUND(1007, "User not found", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1008, "Unauthenticated", HttpStatus.UNAUTHORIZED),
+    FILE_UPLOAD_ERROR(1009, "Cannot upload file", HttpStatus.BAD_REQUEST),
     ;
 
     int code;
