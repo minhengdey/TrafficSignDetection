@@ -75,24 +75,33 @@ class AuthManager {
 
   async liveLogin(email, password) {
     try {
+      // Send credentials: include so server can set HttpOnly cookie
       const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.LOGIN}`, {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        this.setAuth(data.token, email)
-        return { success: true, token: data.token, email }
+        // If backend returns a token, store it; otherwise rely on HttpOnly cookie set by server
+        if (data && data.token) {
+          this.setAuth(data.token, data.email || email)
+          return { success: true, token: data.token, email: data.email || email }
+        }
+        // No token returned, but server likely set cookie. Store user email locally for UI.
+        this.setAuth('', data.email || email)
+        return { success: true, email: data.email || email }
       } else {
-        throw new Error(data.message || "Login failed")
+        throw new Error((data && (data.message || data.error)) || "Login failed")
       }
     } catch (error) {
-      throw { success: false, message: error.message }
+      // Normalize thrown error
+      throw { success: false, message: error.message || (error && error.toString()) }
     }
   }
 
@@ -100,22 +109,28 @@ class AuthManager {
     try {
       const response = await fetch(`${CONFIG.API_BASE_URL}${CONFIG.ENDPOINTS.REGISTER}`, {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password, username }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        this.setAuth(data.token, email)
-        return { success: true, token: data.token, email }
+        // If token returned, store it; otherwise rely on server-set cookie
+        if (data && data.token) {
+          this.setAuth(data.token, data.email || email)
+          return { success: true, token: data.token, email: data.email || email }
+        }
+        this.setAuth('', data.email || email)
+        return { success: true, email: data.email || email }
       } else {
-        throw new Error(data.message || "Registration failed")
+        throw new Error((data && (data.message || data.error)) || "Registration failed")
       }
     } catch (error) {
-      throw { success: false, message: error.message }
+      throw { success: false, message: error.message || (error && error.toString()) }
     }
   }
 

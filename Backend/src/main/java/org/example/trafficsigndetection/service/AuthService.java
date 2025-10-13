@@ -60,7 +60,7 @@ public class AuthService {
                     .token(generateToken(user))
                     .build();
         }
-        throw new AppException(ErrorCode.UNAUTHORIZED);
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 
     public String generateToken(User user) {
