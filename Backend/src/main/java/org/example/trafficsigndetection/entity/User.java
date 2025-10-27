@@ -49,8 +49,8 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (role.name().isEmpty()) {
-            role = Role.USER;
+        if (this.role == null) {
+            this.role = Role.USER;
         }
     }
 }
