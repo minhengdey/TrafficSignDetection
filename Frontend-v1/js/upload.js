@@ -1,22 +1,6 @@
 // Upload page functionality
-document.addEventListener("DOMContentLoaded", () => {
-  // Declare variables
-  const auth = {
-    isAuthenticated: () => true,
-    logout: () => {},
-    getToken: () => "mockToken",
-  }
-
-  const CONFIG = {
-    MODE: "MOCK",
-    API_BASE_URL: "https://api.example.com",
-    ENDPOINTS: {
-      UPLOAD: "/upload",
-      VIDEO_STATUS: "/video-status/:id",
-      VIDEOS_LIST: "/videos-list",
-    },
-  }
-
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.auth && typeof window.auth.init === 'function') await window.auth.init()
   const MOCK_DATA = {
     videos: [
       {
@@ -38,19 +22,29 @@ document.addEventListener("DOMContentLoaded", () => {
     ],
   }
 
-  // Check authentication
-  if (!auth.isAuthenticated()) {
+  // Check authentication and role
+  if (!window.auth.isAuthenticated()) {
     window.location.href = "login.html"
+    return
+  }
+
+  if (window.auth.isAdmin()) {
+    window.location.href = "admin-dashboard.html"
     return
   }
 
   // Update auth link
   const authLink = document.getElementById("authLink")
-  authLink.textContent = "Logout"
-  authLink.addEventListener("click", (e) => {
-    e.preventDefault()
-    auth.logout()
-  })
+  if (window.auth.isAuthenticated()) {
+    authLink.textContent = "Logout"
+    authLink.addEventListener("click", (e) => {
+      e.preventDefault()
+      window.auth.logout()
+    })
+  } else {
+    authLink.textContent = "Login"
+    authLink.href = "login.html"
+  }
 
   // Elements
   const dropZone = document.getElementById("dropZone")
@@ -106,13 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle file selection
   function handleFileSelect(file) {
-    // Validate file type
     if (!file.type.startsWith("video/")) {
       alert("Please select a valid video file")
       return
     }
 
-    // Validate file size (500MB max)
     const maxSize = 500 * 1024 * 1024
     if (file.size > maxSize) {
       alert("File size must be less than 500MB")
@@ -121,13 +113,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectedFile = file
 
-    // Show preview
     const url = URL.createObjectURL(file)
     videoPreview.src = url
     fileName.textContent = file.name
     fileSize.textContent = formatFileSize(file.size)
 
-    // Get video duration
     videoPreview.addEventListener(
       "loadedmetadata",
       () => {
@@ -136,12 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
       { once: true },
     )
 
-    // Show preview section
     uploadSection.querySelector(".drop-zone").style.display = "none"
     previewSection.style.display = "block"
   }
 
-  // Cancel button
   cancelBtn.addEventListener("click", () => {
     selectedFile = null
     videoPreview.src = ""
@@ -150,16 +138,14 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.value = ""
   })
 
-  // Upload button
   uploadBtn.addEventListener("click", async () => {
     if (!selectedFile) return
 
-    // Hide preview, show progress
     previewSection.style.display = "none"
     progressSection.style.display = "block"
 
     try {
-      if (CONFIG.MODE === "MOCK") {
+      if (window.CONFIG.MODE === "MOCK") {
         await mockUpload()
       } else {
         await liveUpload()
@@ -170,9 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })
 
-  // Mock upload
   async function mockUpload() {
-    // Simulate upload progress
     for (let i = 0; i <= 100; i += 5) {
       await new Promise((resolve) => setTimeout(resolve, 100))
       progressFill.style.width = i + "%"
@@ -187,26 +171,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Generate mock video ID
     currentVideoId = "video-" + Date.now()
 
-    // Show processing section
     progressSection.style.display = "none"
     processingSection.style.display = "block"
     videoId.textContent = currentVideoId
 
-    // Start polling for status
     startProcessingPolling()
   }
 
-  // Live upload
   async function liveUpload() {
     const formData = new FormData()
     formData.append("video", selectedFile)
 
     const xhr = new XMLHttpRequest()
 
-    // Progress tracking
     xhr.upload.addEventListener("progress", (e) => {
       if (e.lengthComputable) {
         const percent = Math.round((e.loaded / e.total) * 100)
@@ -216,18 +195,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })
 
-    // Upload complete
     xhr.addEventListener("load", () => {
       if (xhr.status === 200) {
         const response = JSON.parse(xhr.responseText)
         currentVideoId = response.videoId
 
-        // Show processing section
         progressSection.style.display = "none"
         processingSection.style.display = "block"
         videoId.textContent = currentVideoId
 
-        // Start polling for status
         startProcessingPolling()
       } else {
         throw new Error("Upload failed")
@@ -238,20 +214,19 @@ document.addEventListener("DOMContentLoaded", () => {
       throw new Error("Network error")
     })
 
-    xhr.open("POST", CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.UPLOAD)
-    xhr.setRequestHeader("Authorization", "Bearer " + auth.getToken())
+    xhr.open("POST", window.CONFIG.API_BASE_URL + window.CONFIG.ENDPOINTS.UPLOAD)
+    // Do not set Authorization header; backend uses HttpOnly cookie. Ensure XHR sends credentials.
+    xhr.withCredentials = true
     xhr.send(formData)
   }
 
-  // Start polling for processing status
   function startProcessingPolling() {
     let pollCount = 0
 
     pollingInterval = setInterval(async () => {
       pollCount++
 
-      if (CONFIG.MODE === "MOCK") {
-        // Mock processing (complete after 6 polls = ~18 seconds)
+      if (window.CONFIG.MODE === "MOCK") {
         if (pollCount >= 6) {
           clearInterval(pollingInterval)
           processingComplete()
@@ -266,25 +241,24 @@ document.addEventListener("DOMContentLoaded", () => {
           processingStatus.textContent = messages[Math.min(pollCount - 1, messages.length - 1)]
         }
       } else {
-        // Live polling
         try {
           const response = await fetch(
-            CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.VIDEO_STATUS.replace(":id", currentVideoId),
+            window.CONFIG.API_BASE_URL + window.CONFIG.ENDPOINTS.VIDEO_STATUS.replace(":id", currentVideoId),
             {
-              headers: {
-                Authorization: "Bearer " + auth.getToken(),
-              },
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
             },
           )
 
-          const data = await response.json()
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error((data && (data.message || data.error)) || "Status polling failed")
 
           if (data.status === "completed") {
             clearInterval(pollingInterval)
             processingComplete()
           } else if (data.status === "failed") {
             clearInterval(pollingInterval)
-            alert("Processing failed: " + data.error)
+            alert("Processing failed: " + (data.error || "Unknown error"))
             resetUpload()
           } else {
             processingStatus.textContent = data.message || "Processing..."
@@ -296,13 +270,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3000)
   }
 
-  // Processing complete
   function processingComplete() {
-    // Redirect to results page
     window.location.href = `results.html?id=${currentVideoId}`
   }
 
-  // Reset upload
   function resetUpload() {
     selectedFile = null
     currentVideoId = null
@@ -316,20 +287,18 @@ document.addEventListener("DOMContentLoaded", () => {
     progressPercent.textContent = "0%"
   }
 
-  // Load recent uploads
   loadRecentUploads()
 
   async function loadRecentUploads() {
     try {
       let videos = []
 
-      if (CONFIG.MODE === "MOCK") {
+      if (window.CONFIG.MODE === "MOCK") {
         videos = MOCK_DATA.videos
       } else {
-        const response = await fetch(CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.VIDEOS_LIST, {
-          headers: {
-            Authorization: "Bearer " + auth.getToken(),
-          },
+        const response = await fetch(window.CONFIG.API_BASE_URL + window.CONFIG.ENDPOINTS.VIDEOS_LIST, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         })
         const data = await response.json()
         videos = data.videos
@@ -377,7 +346,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Utility functions
   function formatFileSize(bytes) {
     if (bytes === 0) return "0 Bytes"
     const k = 1024

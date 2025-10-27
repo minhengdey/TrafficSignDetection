@@ -24,6 +24,7 @@
                 <a href="index.html" class="nav-link active">Home</a>
                 <a href="upload.html" class="nav-link">Upload</a>
                 <a href="stats.html" class="nav-link">Statistics</a>
+                <!-- Navigation links will be updated by JavaScript based on auth status -->
                 <a href="#" class="nav-link" id="authLink">Login</a>
             </div>
         </div>
@@ -48,16 +49,16 @@
                     confidence scores, and comprehensive analytics.
                 </p>
                 <div class="hero-actions">
-                    <a href="upload.html" class="btn btn-primary btn-large">
+                    <a href="login.html" class="btn btn-primary btn-large">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="17 8 12 3 7 8" />
                             <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
-                        Upload Video
+                        Register Now
                     </a>
-                    <a href="stats.html" class="btn btn-secondary btn-large">
+                    <a href="login.html" class="btn btn-secondary btn-large">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M3 3v18h18" />
@@ -65,26 +66,8 @@
                             <path d="M13 17V5" />
                             <path d="M8 17v-3" />
                         </svg>
-                        View Analytics
+                        Login
                     </a>
-                </div>
-
-                <!-- Added stats preview cards -->
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <div class="stat-value">99.2%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <div class="stat-value">50+</div>
-                        <div class="stat-label">Sign Types</div>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <div class="stat-value">Real-time</div>
-                        <div class="stat-label">Processing</div>
-                    </div>
                 </div>
             </div>
 
@@ -294,7 +277,9 @@
         </div>
     </footer>
 
+    <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/main.js"></script>
 </body>
 

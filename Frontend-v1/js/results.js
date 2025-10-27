@@ -1,21 +1,6 @@
 // Results page functionality
-document.addEventListener("DOMContentLoaded", () => {
-  // Declare auth and CONFIG variables
-  const auth = {
-    // Mock auth object
-    isAuthenticated: () => true,
-    logout: () => {},
-    getToken: () => "mock_token",
-  }
-
-  const CONFIG = {
-    // Mock CONFIG object
-    MODE: "MOCK",
-    API_BASE_URL: "https://api.example.com",
-    ENDPOINTS: {
-      VIDEO_RESULTS: "/videos/:id/results",
-    },
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.auth && typeof window.auth.init === 'function') await window.auth.init()
 
   // Check authentication
   if (!auth.isAuthenticated()) {
@@ -25,11 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Update auth link
   const authLink = document.getElementById("authLink")
-  authLink.textContent = "Logout"
-  authLink.addEventListener("click", (e) => {
-    e.preventDefault()
-    auth.logout()
-  })
+  if (typeof auth !== "undefined" && auth.isAuthenticated()) {
+    authLink.textContent = "Logout"
+    authLink.addEventListener("click", (e) => {
+      e.preventDefault()
+      auth.logout()
+    })
+  } else {
+    authLink.textContent = "Login"
+    authLink.href = "login.html"
+  }
 
   // Get video ID from URL
   const urlParams = new URLSearchParams(window.location.search)
@@ -84,14 +74,16 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         // Live API call
         const response = await fetch(CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.VIDEO_RESULTS.replace(":id", videoId), {
-          headers: {
-            Authorization: "Bearer " + auth.getToken(),
-          },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         })
 
-        const data = await response.json()
-        videoData = data.video
-        detectionsData = data.detections
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload && (payload.message || payload.error) || 'Failed to load results')
+        // Support either flat or wrapped ApiResponse
+        const result = payload.result || payload
+        videoData = result.video || result.data || { id: videoId, filename: result.filename, duration: result.duration, detectionCount: (result.detections || []).length, videoUrl: result.videoUrl }
+        detectionsData = result.detections || []
       }
 
       // Update UI
