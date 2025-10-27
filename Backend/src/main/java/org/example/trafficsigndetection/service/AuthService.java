@@ -67,38 +67,11 @@ public class AuthService {
         throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 
-    public UserResponse getMyInfo (String token) {
-        Jwt decodedJwt = jwtDecoder.decode(token);
-        Long userId = Long.valueOf(decodedJwt.getSubject());
-        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return userMapper.toResponse(user);
-    }
-
-    public UserResponse updateMyInfo (String token, UpdateRequest request) {
-        Jwt decodedJwt = jwtDecoder.decode(token);
-        Long userId = Long.valueOf(decodedJwt.getSubject());
-        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail()) && !userRepository.existsByEmail(user.getEmail())) {
-            user.setEmail(request.getEmail());
-        }
-        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername()) && !userRepository.existsByUsername(user.getUsername())) {
-            user.setUsername(request.getUsername());
-        }
-        if (request.getPassword() != null && request.getPassword().length() < 8) {
-            throw new AppException(ErrorCode.PASSWORD_INVALID);
-        } else if (request.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userMapper.toResponse(userRepository.save(user));
-    }
-
     public String generateToken(User user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(user.getId()))
-                .issuer("minhanh.com")
+                .subject(String.valueOf(user.getUsername()))
+                .issuer("httm.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(1000, ChronoUnit.HOURS).toEpochMilli()

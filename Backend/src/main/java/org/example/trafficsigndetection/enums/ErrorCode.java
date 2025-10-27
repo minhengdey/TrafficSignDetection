@@ -19,10 +19,6 @@ public enum ErrorCode {
     USER_NOT_FOUND(1007, "User not found", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1008, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     FILE_UPLOAD_ERROR(1009, "Cannot upload file", HttpStatus.BAD_REQUEST),
-    VIDEO_NOT_FOUND(1011, "Video not found", HttpStatus.NOT_FOUND),
-    SIGN_TYPE_NOT_FOUND(1012, "Sign type not found", HttpStatus.NOT_FOUND),
-    DETECTION_NOT_FOUND(1013, "Detection not found", HttpStatus.NOT_FOUND),
-    COOKIE_NOT_FOUND(1010, "Cookie not found", HttpStatus.BAD_REQUEST),
     ;
 
     int code;
