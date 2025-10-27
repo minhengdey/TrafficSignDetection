@@ -66,8 +66,8 @@ public class AuthService {
     public String generateToken(User user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(user.getId()))
-                .issuer("proptit.com")
+                .subject(String.valueOf(user.getUsername()))
+                .issuer("httm.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(1000, ChronoUnit.HOURS).toEpochMilli()
