@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.example.trafficsigndetection.config.CustomJwtDecoder;
 import org.example.trafficsigndetection.dto.request.LoginRequest;
+import org.example.trafficsigndetection.dto.request.UpdateRequest;
 import org.example.trafficsigndetection.dto.request.UserRequest;
 import org.example.trafficsigndetection.dto.response.LoginResponse;
 import org.example.trafficsigndetection.dto.response.UserResponse;
@@ -19,12 +21,13 @@ import org.example.trafficsigndetection.mapper.UserMapper;
 import org.example.trafficsigndetection.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -35,6 +38,7 @@ public class AuthService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    CustomJwtDecoder jwtDecoder;
 
     @NonFinal
     @Value("${signer_key}")
