@@ -2,7 +2,9 @@ package org.example.trafficsigndetection.service;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -10,20 +12,24 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.example.trafficsigndetection.config.CustomJwtDecoder;
 import org.example.trafficsigndetection.dto.request.LoginRequest;
+import org.example.trafficsigndetection.dto.request.LogoutRequest;
 import org.example.trafficsigndetection.dto.request.UpdateRequest;
 import org.example.trafficsigndetection.dto.request.UserRequest;
 import org.example.trafficsigndetection.dto.response.LoginResponse;
 import org.example.trafficsigndetection.dto.response.UserResponse;
+import org.example.trafficsigndetection.entity.InvalidatedToken;
 import org.example.trafficsigndetection.entity.User;
 import org.example.trafficsigndetection.enums.ErrorCode;
 import org.example.trafficsigndetection.exception.AppException;
 import org.example.trafficsigndetection.mapper.UserMapper;
+import org.example.trafficsigndetection.repository.InvalidatedTokenRepository;
 import org.example.trafficsigndetection.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -39,6 +45,7 @@ public class AuthService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     CustomJwtDecoder jwtDecoder;
+    InvalidatedTokenRepository invalidatedTokenRepository;
 
     @NonFinal
     @Value("${signer_key}")
@@ -88,5 +95,40 @@ public class AuthService {
             log.error("Cannot create token", e);
             throw new RuntimeException(e);
         }
+    }
+
+    public UserResponse getMyInfo(String token) {
+        Jwt decodedJwt = jwtDecoder.decode(token);
+        String role = decodedJwt.getClaim("scope");
+        String username = decodedJwt.getSubject();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return userMapper.toResponse(user);
+    }
+
+    public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+        JWSVerifier verifier = new MACVerifier(SIGNER_KEY);
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+        boolean verified = signedJWT.verify(verifier);
+        if (!(verified && expiration.after(new Date()))) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        return signedJWT;
+    }
+
+    public void logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
+        SignedJWT signedJWT = verifyToken(logoutRequest.getToken());
+        String id = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        invalidatedTokenRepository.save(InvalidatedToken.builder()
+                .id(id)
+                .expiryTime(expiryTime)
+                .build());
     }
 }

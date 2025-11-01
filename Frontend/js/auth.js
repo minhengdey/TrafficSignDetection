@@ -17,41 +17,38 @@ class AuthManager {
   }
 
   isAuthenticated() {
-    // Authentication is determined by presence of a stored user; the actual token is held in an HttpOnly cookie by the backend
-    return !!localStorage.getItem(this.userKey)
+    // Chỉ kiểm tra trạng thái xác thực từ biến instance (this._user)
+    return !!this._user;
   }
 
   getUser() {
-    return localStorage.getItem(this.userKey)
+    return this._user ? this._user.email || this._user.username : undefined;
   }
 
   getRole() {
-    return localStorage.getItem(this.roleKey)
+    return this._user ? (this._user.role ? String(this._user.role).toUpperCase().replace(/^ROLE_/, '') : undefined) : undefined;
   }
 
   isAdmin() {
-    return this.getRole() === "ADMIN"
+    return this.getRole() === "ADMIN";
   }
 
   isUser() {
-    return this.getRole() === "USER"
+    return this.getRole() === "USER";
   }
 
   setAuth(_tokenOrCookie, email, role) {
-    // Do NOT persist tokens in localStorage when the backend sets an HttpOnly cookie.
-    // Store only the identifying user info and role locally.
-    if (email) localStorage.setItem(this.userKey, email)
-    if (role) localStorage.setItem(this.roleKey, role || "USER")
+    // Chỉ set vào instance (this._user)
+    this._user = { email: email, role: role };
   }
 
   clearAuth() {
-    localStorage.removeItem(this.userKey)
-    localStorage.removeItem(this.roleKey)
+    this._user = undefined;
   }
 
   async login(identifier, password) {
     // Always use live API
-    return this.liveLogin(identifier, password)
+    return this.liveLogin(identifier, password);
   }
 
   async register(email, password, username) {
@@ -70,28 +67,27 @@ class AuthManager {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
-      })
-
-      const data = await response.json().catch(() => ({}))
-
+      });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        // Backend sets HttpOnly cookie. Fetch profile from server (which will read cookie) to get role and email.
-        const profile = await this.fetchMyProfile().catch(() => null)
-        const role = (profile && profile.role) || "USER"
-        const email = (profile && profile.email) || username
-        this.setAuth(/*cookie*/ true, email, role)
-        return { success: true, username: email, role }
+        const result = data && (data.result || data.data || {});
+        const token = result && (result.token || result.accessToken || result.jwt) ? (result.token || result.accessToken || result.jwt) : null;
+        const profile = await this.fetchMyProfile(token).catch(() => null);
+        const role = (profile && profile.role) ? String(profile.role).toUpperCase() : 'USER';
+        const email = (profile && (profile.email || profile.username)) || username;
+        this._token = token;
+        this.setAuth(/*cookie*/ !!token, email, role);
+        return { success: true, username: email, role, token };
       } else {
-        const message = (data && (data.message || (data.result && data.result.message))) || "Login failed"
-        throw new Error(message)
+        const message = (data && (data.message || (data.result && data.result.message))) || "Login failed";
+        throw new Error(message);
       }
     } catch (error) {
-      const isTypeError =
-        error && (error.name === "TypeError" || /Failed to fetch|NetworkError|TypeError/i.test(String(error)))
+      const isTypeError = error && (error.name === "TypeError" || /Failed to fetch|NetworkError|TypeError/i.test(String(error)));
       const hint = isTypeError
         ? `Cannot reach API at ${APP_CONFIG.API_BASE_URL}. Verify server is running, CORS allows this origin, and URL is correct.`
-        : error.message || String(error)
-      throw { success: false, message: hint }
+        : error.message || String(error);
+      throw { success: false, message: hint };
     }
   }
 
@@ -126,8 +122,14 @@ class AuthManager {
   }
 
   logout() {
-    // Call backend logout to invalidate server-side JWT (HttpOnly cookie)
+    // Clear client auth state immediately
+    this.clearAuth()
     try {
+      // Notify listeners (e.g., navbar) to re-render immediately
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:logout'))
+      }
+      // Call backend logout to invalidate server-side JWT (HttpOnly cookie)
       fetch(`${APP_CONFIG.API_BASE_URL}${APP_CONFIG.ENDPOINTS.LOGOUT}`, {
         method: 'POST',
         credentials: 'include',
@@ -136,32 +138,41 @@ class AuthManager {
     } catch (e) {
       // ignore
     }
-    this.clearAuth()
-    window.location.href = "index.html"
+    // Use replace to avoid returning to a cached authenticated page
+    try {
+      window.location.replace("index.html?logged_out=1")
+    } catch (e) {
+      window.location.href = "index.html?logged_out=1"
+    }
   }
 
   // Fetch profile from server using HttpOnly cookie. Store initPromise so pages can wait for it.
-  async fetchMyProfile() {
+  // Fetch profile from server using HttpOnly cookie or optional bearer token.
+  // If `token` is provided, it will be sent as Authorization: Bearer <token> to retrieve profile when cookies aren't available.
+  async fetchMyProfile(token) {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const response = await fetch(`${APP_CONFIG.API_BASE_URL}${APP_CONFIG.ENDPOINTS.USER_PROFILE}`, {
         method: 'GET',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      const data = await response.json().catch(() => ({}))
+        headers,
+      });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const result = data && (data.result || data.data || {})
-        const user = result
+        const result = data && (data.result || data.data || {});
+        const user = result;
         if (user && (user.email || user.username)) {
-          this.setAuth(true, user.email || user.username, (user.role || 'USER'))
-          return user
+          const role = user.role ? String(user.role).toUpperCase() : 'USER';
+          this.setAuth(true, user.email || user.username, role);
+          return user;
         }
       }
-      this.clearAuth()
-      return null
+      this.clearAuth();
+      return null;
     } catch (e) {
-      this.clearAuth()
-      return null
+      this.clearAuth();
+      return null;
     }
   }
 
@@ -171,6 +182,25 @@ class AuthManager {
       this.initPromise = this.fetchMyProfile()
     }
     return this.initPromise
+  }
+
+  // Decode JWT (no signature verification) to read claims client-side.
+  // Returns parsed payload object or null.
+  getTokenClaims(token) {
+    try {
+      token = token || this._token
+      if (!token) return null
+      const parts = token.split('.')
+      if (parts.length < 2) return null
+      // base64url -> base64
+      let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      // pad
+      while (payload.length % 4) payload += '='
+      const decoded = atob(payload)
+      return JSON.parse(decoded)
+    } catch (e) {
+      return null
+    }
   }
 }
 

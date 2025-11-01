@@ -31,12 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (auth && typeof auth.isAuthenticated === 'function' && auth.isAuthenticated()) {
-    // Redirect based on stored role
-    const storedRole = auth.getRole && auth.getRole()
+    // Redirect based on stored role (normalize casing)
+    const storedRoleRaw = auth.getRole && auth.getRole()
+    const storedRole = storedRoleRaw ? String(storedRoleRaw).toUpperCase() : null
     if (storedRole === 'ADMIN') {
-      window.location.href = 'admin-dashboard.html'
+      window.location.href = 'stats.html'
     } else {
-      window.location.href = 'user-dashboard.html'
+      window.location.href = 'upload.html'
     }
     return
   }
@@ -131,13 +132,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const loginResult = await auth.login(identifier, password)
         showSuccess("Login successful! Redirecting...")
-        // Determine role from login result or stored role
-        const role = (loginResult && loginResult.role) || (auth.getRole && auth.getRole())
+        // Determine role: prefer role from loginResult/profile, but if that is missing
+        // attempt to parse role from the JWT returned by the login call (claims.scope)
+        let roleRaw = (loginResult && loginResult.role) || (auth.getRole && auth.getRole())
+        if ((!roleRaw || roleRaw === 'USER') && (loginResult && loginResult.token || auth._token)) {
+          // parse token claims (no signature verification) to extract scope/role
+          try {
+            const claims = auth.getTokenClaims(loginResult && loginResult.token)
+            if (claims) {
+              roleRaw = claims.scope || claims.role || roleRaw
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+        // Normalize and strip ROLE_ prefix if present
+        const role = roleRaw ? String(roleRaw).toUpperCase().replace(/^ROLE_/, '') : 'USER'
         setTimeout(() => {
           if (role === 'ADMIN') {
-            window.location.href = 'admin-dashboard.html'
+            window.location.href = 'stats.html'
           } else {
-            window.location.href = 'user-dashboard.html'
+            // Regular user -> internal area with tabs (Upload, Profile, History, Logout)
+            window.location.href = 'upload.html'
           }
         }, 1000)
       } else {

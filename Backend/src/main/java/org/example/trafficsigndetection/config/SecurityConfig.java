@@ -28,8 +28,8 @@ import java.util.List;
 public class SecurityConfig {
     JwtCookieFilter jwtCookieFilter;
 
-    String[] PUBLIC_ENDPOINT_POST = { "/api/auth/register", "/api/auth/login", "/api/upload" };
-    String[] PUBLIC_ENDPOINT_GET = {};
+    String[] PUBLIC_ENDPOINT_POST = { "/api/auth/register", "/api/auth/login", "/api/upload", "/api/auth/logout" };
+    String[] PUBLIC_ENDPOINT_GET = { "/api/auth/me" };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

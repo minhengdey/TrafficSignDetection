@@ -24,16 +24,22 @@ public class TrafficSignType {
     String code;
 
     @Column(nullable = false, length = 200)
-    String name;
+    String name_vi;
+
+    @Column(nullable = false, length = 200)
+    String name_en;
 
     @Column(columnDefinition = "TEXT")
     String description;
 
-    @Column(name = "example_image_path", length = 500)
-    String exampleImagePath;
-
     @JsonIgnore
     @OneToMany(mappedBy = "signType")
     List<Detection> detections = new ArrayList<>();
+
+    public TrafficSignType(String code, String name_en, String description) {
+        this.code = code;
+        this.name_en = name_en;
+        this.description = description;
+    }
 }
 

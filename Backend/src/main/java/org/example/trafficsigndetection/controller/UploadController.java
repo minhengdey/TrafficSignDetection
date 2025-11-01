@@ -1,6 +1,7 @@
 package org.example.trafficsigndetection.controller;
 
 import org.example.trafficsigndetection.service.B2Service;
+import org.example.trafficsigndetection.service.UserService;
 import org.example.trafficsigndetection.service.VideoService;
 import lombok.extern.slf4j.Slf4j;
 import org.example.trafficsigndetection.enums.VideoStatus;
@@ -17,6 +18,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +49,11 @@ public class UploadController {
 
     private final B2Service b2Service;
     private final VideoService videoService;
+    private final UserService userService;
     private final ObjectMapper objectMapper;
 
-    // Thread pool for parallel part uploads - configurable, defaults to 2x CPU cores
+    // Thread pool for parallel part uploads - configurable, defaults to 2x CPU
+    // cores
     private final ExecutorService uploadExecutor;
 
     // Background executor for orchestrating uploads
@@ -63,9 +68,10 @@ public class UploadController {
     // Configurable upload timeout
     private final int uploadTimeoutMinutes;
 
-    public UploadController(B2Service b2Service, VideoService videoService) {
+    public UploadController(B2Service b2Service, VideoService videoService, UserService userService) {
         this.b2Service = b2Service;
         this.videoService = videoService;
+        this.userService = userService;
         this.objectMapper = new ObjectMapper();
 
         // Initialize thread pools
@@ -147,7 +153,7 @@ public class UploadController {
     }
 
     private ResponseEntity<?> handleDirectUpload(MultipartFile file, boolean returnPresignedGet,
-                                                 HttpServletRequest request) throws IOException {
+            HttpServletRequest request) throws IOException {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
         }
@@ -157,7 +163,7 @@ public class UploadController {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthenticated"));
         }
 
-        if (!videoService.userExists(username)) {
+        if (!userService.existsByUsername(username)) {
             return ResponseEntity.status(403).body(Map.of("error", "User not found", "username", username));
         }
 
@@ -186,11 +192,14 @@ public class UploadController {
             String keySaved = b2Service.uploadSimple(file);
             String url = b2Service.getObjectUrl(keySaved);
 
-            // Persist video metadata
+            // Persist video metadata and return saved video id where possible
+            java.util.Optional<org.example.trafficsigndetection.entity.Video> savedVideo = java.util.Optional.empty();
             try {
-                videoService.saveVideoForUsername(username,
-                        url,
-                        keySaved, file.getSize(), null, VideoStatus.UPLOADED);
+                savedVideo = videoService.saveVideoForUsername(username,
+                        LocalDateTime.now()
+                                .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                                + "_" + username,
+                        url, file.getSize(), VideoStatus.UPLOADED);
             } catch (Exception ex) {
                 log.error("Failed to save video metadata for username={}", username, ex);
             }
@@ -198,10 +207,15 @@ public class UploadController {
             Map<String, Object> response = new java.util.HashMap<>();
             response.put("key", keySaved);
             response.put("url", url);
+            response.put("videoId", savedVideo.map(v -> v.getId()).orElse(null));
 
-            if (returnPresignedGet) {
+            // Always provide a short-lived presigned GET URL so frontend can play videos
+            // directly
+            try {
                 String presignedGet = b2Service.presignGetUrl(keySaved, PRESIGNED_URL_DURATION);
                 response.put("presignedGetUrl", presignedGet);
+            } catch (Exception ex) {
+                log.warn("Failed to generate presignedGetUrl for key {}: {}", keySaved, ex.getMessage());
             }
 
             return ResponseEntity.ok(response);
@@ -293,7 +307,7 @@ public class UploadController {
     }
 
     private ResponseEntity<?> handleUploadPart(String uploadId, Integer partNumber,
-                                               HttpServletRequest request) throws IOException {
+            HttpServletRequest request) throws IOException {
         if (uploadId == null || partNumber == null) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "uploadId (sessionId) and partNumber required"));
@@ -415,7 +429,7 @@ public class UploadController {
      * Upload file in parallel chunks for maximum speed
      */
     private void uploadFileInParallel(Path file, String filename, String contentType,
-                                      Path sessionDir, String username) throws Exception {
+            Path sessionDir, String username) throws Exception {
 
         var init = b2Service.initiateMultipartUpload(filename, contentType);
         String key = init.key();
@@ -440,8 +454,8 @@ public class UploadController {
             final long remain = totalSize - offset;
             final int thisSize = (int) Math.min(chunkSize, remain);
 
-            CompletableFuture<software.amazon.awssdk.services.s3.model.CompletedPart> future =
-                    CompletableFuture.supplyAsync(() -> uploadPart(
+            CompletableFuture<software.amazon.awssdk.services.s3.model.CompletedPart> future = CompletableFuture
+                    .supplyAsync(() -> uploadPart(
                             file, key, s3UploadId, partNumber, offset, thisSize,
                             sessionDir, completedCount, totalParts), uploadExecutor);
 
@@ -491,7 +505,7 @@ public class UploadController {
 
         long startNs = System.nanoTime();
         try (var raf = new java.io.RandomAccessFile(file.toFile(), "r");
-             var channel = raf.getChannel()) {
+                var channel = raf.getChannel()) {
 
             channel.position(offset);
             InputStream rawIn = java.nio.channels.Channels.newInputStream(channel);
@@ -520,7 +534,7 @@ public class UploadController {
      * Complete multipart upload by uploading parts in parallel
      */
     private void completeMultipartInParallel(Path uploadDir, Path metaFile,
-                                             List<Map<String, Object>> partsList) throws Exception {
+            List<Map<String, Object>> partsList) throws Exception {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> metadata = objectMapper.readValue(metaFile.toFile(), Map.class);
@@ -539,8 +553,8 @@ public class UploadController {
         for (Map<String, Object> partInfo : partsList) {
             final int partNumber = ((Number) partInfo.get("partNumber")).intValue();
 
-            CompletableFuture<software.amazon.awssdk.services.s3.model.CompletedPart> future =
-                    CompletableFuture.supplyAsync(() -> uploadSavedPart(
+            CompletableFuture<software.amazon.awssdk.services.s3.model.CompletedPart> future = CompletableFuture
+                    .supplyAsync(() -> uploadSavedPart(
                             uploadDir, key, s3UploadId, partNumber, completed, partsList.size()), uploadExecutor);
 
             futures.add(future);
@@ -611,7 +625,7 @@ public class UploadController {
      * Upload part with retry logic
      */
     private String uploadPartWithRetry(String key, String uploadId, int partNumber,
-                                       InputStream data, long size, int maxRetries) throws IOException, InterruptedException {
+            InputStream data, long size, int maxRetries) throws IOException, InterruptedException {
         int attempt = 0;
         long backoffMs = INITIAL_RETRY_BACKOFF_MS;
 
@@ -665,7 +679,7 @@ public class UploadController {
      * Write progress to file
      */
     private void writeProgress(Path sessionDir, String status, int completedParts, int totalParts,
-                               String key, String uploadId, String url) {
+            String key, String uploadId, String url) {
         try {
             Path progressFile = sessionDir.resolve("progress.json");
             Map<String, Object> progress = new java.util.HashMap<>();
@@ -739,7 +753,9 @@ public class UploadController {
         }
 
         try {
-            var saved = videoService.saveVideoForUsername(username, url, key, size, null, VideoStatus.UPLOADED);
+            var saved = videoService.saveVideoForUsername(username, LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                    + "_" + username, url, size, VideoStatus.UPLOADED);
             if (saved.isEmpty()) {
                 log.debug("Video not saved for username={}", username);
             } else {

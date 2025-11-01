@@ -10,7 +10,7 @@ const CONFIG = {
   ENDPOINTS: {
     LOGIN: "/api/auth/login",
     REGISTER: "/api/auth/register",
-    UPLOAD: "/videos/upload",
+    UPLOAD: "/api/video/upload",
     VIDEO_STATUS: "/videos/:id/status",
     VIDEO_RESULTS: "/videos/:id/results",
     VIDEOS_LIST: "/videos",

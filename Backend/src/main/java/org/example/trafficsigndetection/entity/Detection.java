@@ -1,5 +1,7 @@
 package org.example.trafficsigndetection.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -7,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
 @Entity
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Data
 @Builder
 @AllArgsConstructor
@@ -20,11 +23,13 @@ public class Detection {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "video_id", nullable = false)
+    @JsonIgnore
     Video video;
 
     @Column(name = "frame_number")
     Integer frameNumber;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sign_type_id")
     TrafficSignType signType;
@@ -47,8 +52,11 @@ public class Detection {
     @Column(name = "bbox_h")
     Integer bboxH;
 
-    @Column(name = "cropped_image_path", length = 500)
-    String croppedImagePath;
+    @Column(name = "orig_image_w")
+    Integer origImageWidth;
+
+    @Column(name = "orig_image_h")
+    Integer origImageHeight;
 
     @Column(name = "detected_at", nullable = false)
     LocalDateTime detectedAt;
@@ -58,4 +66,3 @@ public class Detection {
         detectedAt = LocalDateTime.now();
     }
 }
-

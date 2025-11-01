@@ -35,12 +35,10 @@ public class AdminSignTypeService {
                 .orElseThrow(() -> new AppException(ErrorCode.SIGN_TYPE_NOT_FOUND));
         if (payload.getCode() != null)
             t.setCode(payload.getCode());
-        if (payload.getName() != null)
-            t.setName(payload.getName());
+        if (payload.getName_vi() != null)
+            t.setName_vi(payload.getName_vi());
         if (payload.getDescription() != null)
             t.setDescription(payload.getDescription());
-        if (payload.getExampleImagePath() != null)
-            t.setExampleImagePath(payload.getExampleImagePath());
         return trafficSignTypeRepository.save(t);
     }
 

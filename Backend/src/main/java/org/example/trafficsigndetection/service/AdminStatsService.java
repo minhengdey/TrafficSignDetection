@@ -52,7 +52,7 @@ public class AdminStatsService {
 
     public Map<String, Object> topSigns() {
         Map<String, Long> counts = detectionRepository.findAll().stream()
-                .map(d -> d.getSignType() != null ? d.getSignType().getName() : d.getLabel())
+                .map(d -> d.getSignType() != null ? d.getSignType().getName_vi() : d.getLabel())
                 .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
 
         List<Map.Entry<String, Long>> list = counts.entrySet().stream()

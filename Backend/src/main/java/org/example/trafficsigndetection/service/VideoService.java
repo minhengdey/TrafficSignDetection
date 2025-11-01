@@ -5,11 +5,17 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.example.trafficsigndetection.dto.response.VideoResponse;
 import org.example.trafficsigndetection.entity.Video;
+import org.example.trafficsigndetection.enums.ErrorCode;
 import org.example.trafficsigndetection.enums.VideoStatus;
+import org.example.trafficsigndetection.exception.AppException;
+import org.example.trafficsigndetection.mapper.VideoMapper;
 import org.example.trafficsigndetection.repository.UserRepository;
 import org.example.trafficsigndetection.repository.VideoRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,23 +24,20 @@ import org.springframework.stereotype.Service;
 public class VideoService {
     VideoRepository videoRepository;
     UserRepository userRepository;
+    VideoMapper videoMapper;
 
-    /**
-     * Save a Video for the given username. Returns the saved Video if successful.
-     */
     @Transactional
-    public java.util.Optional<Video> saveVideoForUsername(String username, String filename, String filepath,
-            Long filesize, Integer durationSeconds, VideoStatus status) {
-        if (username == null) {
+    public Optional<Video> saveVideoForUsername(String username, String filename, String filepath,
+                                                Long filesize, VideoStatus status) {
+        if (!userRepository.existsByUsername(username)) {
             log.debug("saveVideoForUsername called with null username - skipping save");
-            return java.util.Optional.empty();
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
         return userRepository.findByUsername(username).map(u -> {
             Video v = Video.builder()
                     .filename(filename)
                     .filepath(filepath)
                     .filesize(filesize)
-                    .durationSeconds(durationSeconds)
                     .status(status == null ? VideoStatus.UPLOADED : status)
                     .user(u)
                     .build();
@@ -44,12 +47,9 @@ public class VideoService {
         });
     }
 
-    /**
-     * Check whether a user with given username exists.
-     */
-    public boolean userExists(String username) {
-        if (username == null)
-            return false;
-        return userRepository.findByUsername(username).isPresent();
+    public VideoResponse findByVideoId(Long videoId) {
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new AppException(ErrorCode.VIDEO_NOT_FOUND));
+        return videoMapper.toResponse(video);
     }
 }
