@@ -1,22 +1,6 @@
 // Upload page functionality
-document.addEventListener("DOMContentLoaded", () => {
-  // Declare variables
-  const auth = {
-    isAuthenticated: () => true,
-    logout: () => {},
-    getToken: () => "mockToken",
-  }
-
-  const CONFIG = {
-    MODE: "MOCK",
-    API_BASE_URL: "https://api.example.com",
-    ENDPOINTS: {
-      UPLOAD: "/upload",
-      VIDEO_STATUS: "/video-status/:id",
-      VIDEOS_LIST: "/videos-list",
-    },
-  }
-
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.auth && typeof window.auth.init === 'function') await window.auth.init()
   const MOCK_DATA = {
     videos: [
       {
@@ -38,19 +22,41 @@ document.addEventListener("DOMContentLoaded", () => {
     ],
   }
 
-  // Check authentication
-  if (!auth.isAuthenticated()) {
+  // Check authentication and role
+  if (!window.auth.isAuthenticated()) {
     window.location.href = "login.html"
     return
   }
 
-  // Update auth link
+  if (window.auth.isAdmin()) {
+    window.location.href = "admin-dashboard.html"
+    return
+  }
+
+  // Update auth link (defensive: element may be absent on some pages)
   const authLink = document.getElementById("authLink")
-  authLink.textContent = "Logout"
-  authLink.addEventListener("click", (e) => {
-    e.preventDefault()
-    auth.logout()
-  })
+  if (authLink) {
+    try {
+      if (window.auth.isAuthenticated()) {
+        authLink.textContent = "Logout"
+        authLink.addEventListener("click", (e) => {
+          e.preventDefault()
+          window.auth.logout()
+        })
+      } else {
+        authLink.textContent = "Login"
+        authLink.href = "login.html"
+      }
+    } catch (err) {
+      // If auth helper is missing or errors, fallback to a Login link
+      console.warn('auth helper error:', err)
+      authLink.textContent = 'Login'
+      authLink.href = 'login.html'
+    }
+  } else {
+    // Not fatal - some pages may not include the nav link
+    console.warn('authLink element not found in DOM')
+  }
 
   // Elements
   const dropZone = document.getElementById("dropZone")
@@ -106,13 +112,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle file selection
   function handleFileSelect(file) {
-    // Validate file type
     if (!file.type.startsWith("video/")) {
       alert("Please select a valid video file")
       return
     }
 
-    // Validate file size (500MB max)
     const maxSize = 500 * 1024 * 1024
     if (file.size > maxSize) {
       alert("File size must be less than 500MB")
@@ -121,13 +125,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectedFile = file
 
-    // Show preview
     const url = URL.createObjectURL(file)
     videoPreview.src = url
     fileName.textContent = file.name
     fileSize.textContent = formatFileSize(file.size)
 
-    // Get video duration
     videoPreview.addEventListener(
       "loadedmetadata",
       () => {
@@ -136,12 +138,10 @@ document.addEventListener("DOMContentLoaded", () => {
       { once: true },
     )
 
-    // Show preview section
     uploadSection.querySelector(".drop-zone").style.display = "none"
     previewSection.style.display = "block"
   }
 
-  // Cancel button
   cancelBtn.addEventListener("click", () => {
     selectedFile = null
     videoPreview.src = ""
@@ -150,16 +150,14 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.value = ""
   })
 
-  // Upload button
   uploadBtn.addEventListener("click", async () => {
     if (!selectedFile) return
 
-    // Hide preview, show progress
     previewSection.style.display = "none"
     progressSection.style.display = "block"
 
     try {
-      if (CONFIG.MODE === "MOCK") {
+      if (window.CONFIG.MODE === "MOCK") {
         await mockUpload()
       } else {
         await liveUpload()
@@ -170,9 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })
 
-  // Mock upload
   async function mockUpload() {
-    // Simulate upload progress
     for (let i = 0; i <= 100; i += 5) {
       await new Promise((resolve) => setTimeout(resolve, 100))
       progressFill.style.width = i + "%"
@@ -187,71 +183,189 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Generate mock video ID
     currentVideoId = "video-" + Date.now()
 
-    // Show processing section
     progressSection.style.display = "none"
     processingSection.style.display = "block"
     videoId.textContent = currentVideoId
 
-    // Start polling for status
     startProcessingPolling()
   }
 
-  // Live upload
   async function liveUpload() {
-    const formData = new FormData()
-    formData.append("video", selectedFile)
+    // Step 1: Upload the file to the server at /api/upload with visible progress
+    // We'll capture the server-returned URL (if any) so the results page can use it instead of a local blob
+    let uploadedFileUrl = null
+    let uploadedVideoId = null
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      const fd = new FormData()
+      fd.append('file', selectedFile)
 
-    const xhr = new XMLHttpRequest()
+      xhr.open('POST', window.CONFIG.API_BASE_URL + '/api/upload', true)
+      xhr.withCredentials = true
 
-    // Progress tracking
-    xhr.upload.addEventListener("progress", (e) => {
-      if (e.lengthComputable) {
-        const percent = Math.round((e.loaded / e.total) * 100)
-        progressFill.style.width = percent + "%"
-        progressPercent.textContent = percent + "%"
-        progressStatus.textContent = "Uploading video..."
-      }
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100)
+          progressFill.style.width = percent + '%'
+          progressPercent.textContent = percent + '%'
+          progressStatus.textContent = 'Uploading video...'
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const resp = xhr.responseText ? JSON.parse(xhr.responseText) : {}
+            console.info('Upload response', resp)
+            // prefer explicit fields returned by backend
+            uploadedFileUrl = resp.url || resp.presignedGetUrl || resp.filepath || resp.filePath || null
+            // backend may return the canonical video id as `videoId`; fall back to fileName or id
+            uploadedVideoId = resp.videoId || resp.fileName || resp.id || null
+          } catch (err) {
+            console.warn('Could not parse upload response JSON', err)
+          }
+          resolve()
+        } else {
+          reject(new Error('Upload failed: ' + xhr.status + ' ' + xhr.statusText))
+        }
+      })
+
+      xhr.addEventListener('error', () => reject(new Error('Network error during upload')))
+      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
+
+      xhr.send(fd)
     })
 
-    // Upload complete
-    xhr.addEventListener("load", () => {
-      if (xhr.status === 200) {
-        const response = JSON.parse(xhr.responseText)
-        currentVideoId = response.videoId
+    // Step 2: Show processing screen while running detection
+    progressSection.style.display = 'none'
+    processingSection.style.display = 'block'
+    processingStatus.textContent = 'Analyzing traffic signs...'
 
-        // Show processing section
-        progressSection.style.display = "none"
-        processingSection.style.display = "block"
-        videoId.textContent = currentVideoId
+    // Step 3: Call detection endpoint
+    let resp = null
+    if (uploadedFileUrl) {
+      // send the server-side URL to the detection API (JSON)
+      const payload = { videoUrl: encodeURI(uploadedFileUrl) }
+      if (uploadedVideoId) payload.videoId = uploadedVideoId
+      console.debug('Detection payload (sent to /api/video/detection):', payload)
 
-        // Start polling for status
-        startProcessingPolling()
-      } else {
-        throw new Error("Upload failed")
-      }
-    })
+      resp = await fetch(window.CONFIG.API_BASE_URL + '/api/video/detection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      })
+    } else {
+      // fallback: upload the file again as multipart (server may accept)
+      const formData = new FormData()
+      formData.append('file', selectedFile)
 
-    xhr.addEventListener("error", () => {
-      throw new Error("Network error")
-    })
+      resp = await fetch(window.CONFIG.API_BASE_URL + '/api/video/detection', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      })
+    }
 
-    xhr.open("POST", CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.UPLOAD)
-    xhr.setRequestHeader("Authorization", "Bearer " + auth.getToken())
-    xhr.send(formData)
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => resp.statusText)
+      throw new Error('Detection failed: ' + errText)
+    }
+
+    const data = await resp.json().catch(() => ({}))
+    if (data.status !== 'ok') {
+      throw new Error('Processing failed on server')
+    }
+
+    // Redirect to results page using canonical videoId returned by upload or detection
+    // prefer videoId from upload, otherwise use videoId from detection response
+    let resolvedVideoId = uploadedVideoId || null
+    try {
+      const detPayload = data || {}
+      if (detPayload.videoId) resolvedVideoId = detPayload.videoId
+    } catch (e) {
+      console.warn('Failed to parse detection response payload', e)
+    }
+
+    if (resolvedVideoId) {
+      window.location.href = `results.html?id=${resolvedVideoId}`
+    } else {
+      // Fallback: try to redirect to a generic results page (may show error)
+      window.location.href = `results.html`
+    }
   }
 
-  // Start polling for processing status
+  // Draw detection boxes on the overlay canvas based on frames returned by backend
+  function drawResults(frames) {
+    const overlay = document.getElementById('overlay')
+    if (!overlay) return
+    const ctx = overlay.getContext('2d')
+
+    // frames: array of { frameIndex, timeSeconds, detectionJson }
+    const parsed = frames.map(f => ({
+      time: f.timeSeconds ?? 0,
+      detections: f.detectionJson ? JSON.parse(f.detectionJson) : null,
+    }))
+
+    let lastIdx = -1
+    videoPreview.addEventListener('timeupdate', () => {
+      const t = videoPreview.currentTime
+
+      // find latest frame with time <= t
+      let idx = -1
+      for (let i = 0; i < parsed.length; i++) {
+        if (parsed[i].time <= t) idx = i
+        else break
+      }
+
+      if (idx === -1 || idx === lastIdx) return
+      lastIdx = idx
+
+      ctx.clearRect(0, 0, overlay.width, overlay.height)
+      const item = parsed[idx]
+      if (!item || !item.detections) return
+
+      const detection = item.detections
+      if (!detection.predictions || !Array.isArray(detection.predictions)) return
+
+      detection.predictions.forEach(pred => {
+        let x = pred.x
+        let y = pred.y
+        let w = pred.width
+        let h = pred.height
+
+        // if normalized coords between 0..1
+        if (x <= 1 && y <= 1 && w <= 1 && h <= 1) {
+          x = x * overlay.width
+          y = y * overlay.height
+          w = w * overlay.width
+          h = h * overlay.height
+        } else {
+          // assume Roboflow returns center x,y in pixels
+          x = x - w / 2
+          y = y - h / 2
+        }
+
+        ctx.strokeStyle = 'red'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x, y, w, h)
+        ctx.fillStyle = 'red'
+        ctx.font = '14px sans-serif'
+        const label = `${pred.class} (${Math.round((pred.confidence || 0) * 100)}%)`
+        ctx.fillText(label, x + 4, Math.max(12, y - 6))
+      })
+    })
+  }
+
   function startProcessingPolling() {
     let pollCount = 0
 
     pollingInterval = setInterval(async () => {
       pollCount++
 
-      if (CONFIG.MODE === "MOCK") {
-        // Mock processing (complete after 6 polls = ~18 seconds)
+      if (window.CONFIG.MODE === "MOCK") {
         if (pollCount >= 6) {
           clearInterval(pollingInterval)
           processingComplete()
@@ -266,25 +380,24 @@ document.addEventListener("DOMContentLoaded", () => {
           processingStatus.textContent = messages[Math.min(pollCount - 1, messages.length - 1)]
         }
       } else {
-        // Live polling
         try {
           const response = await fetch(
-            CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.VIDEO_STATUS.replace(":id", currentVideoId),
+            window.CONFIG.API_BASE_URL + window.CONFIG.ENDPOINTS.VIDEO_STATUS.replace(":id", currentVideoId),
             {
-              headers: {
-                Authorization: "Bearer " + auth.getToken(),
-              },
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
             },
           )
 
-          const data = await response.json()
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error((data && (data.message || data.error)) || "Status polling failed")
 
           if (data.status === "completed") {
             clearInterval(pollingInterval)
             processingComplete()
           } else if (data.status === "failed") {
             clearInterval(pollingInterval)
-            alert("Processing failed: " + data.error)
+            alert("Processing failed: " + (data.error || "Unknown error"))
             resetUpload()
           } else {
             processingStatus.textContent = data.message || "Processing..."
@@ -296,13 +409,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3000)
   }
 
-  // Processing complete
   function processingComplete() {
-    // Redirect to results page
-    window.location.href = `results.html?id=${currentVideoId}`
+    // fallback behavior: redirect to results page if your backend provides it
+    if (currentVideoId) window.location.href = `results.html?id=${currentVideoId}`
   }
 
-  // Reset upload
   function resetUpload() {
     selectedFile = null
     currentVideoId = null
@@ -316,23 +427,34 @@ document.addEventListener("DOMContentLoaded", () => {
     progressPercent.textContent = "0%"
   }
 
-  // Load recent uploads
   loadRecentUploads()
 
   async function loadRecentUploads() {
     try {
       let videos = []
 
-      if (CONFIG.MODE === "MOCK") {
+      if (window.CONFIG.MODE === "MOCK") {
         videos = MOCK_DATA.videos
       } else {
-        const response = await fetch(CONFIG.API_BASE_URL + CONFIG.ENDPOINTS.VIDEOS_LIST, {
-          headers: {
-            Authorization: "Bearer " + auth.getToken(),
-          },
+        const response = await fetch(window.CONFIG.API_BASE_URL + window.CONFIG.ENDPOINTS.VIDEOS_LIST, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         })
-        const data = await response.json()
-        videos = data.videos
+
+        // Some backends may return an empty body or plain text; guard against invalid JSON
+        const text = await response.text().catch(() => '')
+        if (!text || text.trim() === '') {
+          console.warn('Videos list endpoint returned empty body')
+          videos = []
+        } else {
+          try {
+            const data = JSON.parse(text)
+            videos = data.videos || []
+          } catch (err) {
+            console.warn('Failed to parse videos list JSON, falling back to empty list', err)
+            videos = []
+          }
+        }
       }
 
       if (videos.length === 0) {
@@ -377,7 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Utility functions
   function formatFileSize(bytes) {
     if (bytes === 0) return "0 Bytes"
     const k = 1024

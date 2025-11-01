@@ -1,23 +1,13 @@
 // Main page functionality
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.auth && typeof window.auth.init === 'function') await window.auth.init()
   const authLink = document.getElementById("authLink")
-  const auth = {
-    // Declare the auth variable
-    isAuthenticated: () => {
-      // Implementation of isAuthenticated
-    },
-    logout: () => {
-      // Implementation of logout
-    },
-  }
+  // Guard in case the navigation was re-rendered by `nav.js` and the element no longer exists
+  if (!authLink) return
 
-  // Update auth link based on authentication status
-  if (auth.isAuthenticated()) {
-    authLink.textContent = "Logout"
-    authLink.addEventListener("click", (e) => {
-      e.preventDefault()
-      auth.logout()
-    })
+  if (typeof window.auth !== "undefined" && window.auth.isAuthenticated()) {
+    authLink.textContent = "Dashboard"
+    authLink.href = "dashboard.html"
   } else {
     authLink.textContent = "Login"
     authLink.href = "login.html"

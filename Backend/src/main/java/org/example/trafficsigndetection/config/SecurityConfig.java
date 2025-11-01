@@ -28,8 +28,8 @@ import java.util.List;
 public class SecurityConfig {
     JwtCookieFilter jwtCookieFilter;
 
-    String[] PUBLIC_ENDPOINT_POST = { "/api/auth/register", "/api/auth/login", "/api/upload" };
-    String[] PUBLIC_ENDPOINT_GET = {};
+    String[] PUBLIC_ENDPOINT_POST = { "/api/auth/register", "/api/auth/login", "/api/upload", "/api/auth/logout" };
+    String[] PUBLIC_ENDPOINT_GET = { "/api/auth/me" };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(List.of("http://localhost:5500"));
+                    corsConfiguration.setAllowedOrigins(List.of("http://localhost:5500", "http://127.0.0.1:5500"));
                     corsConfiguration.setAllowedMethods(List.of("*"));
                     corsConfiguration.setAllowedHeaders(List.of("*"));
                     corsConfiguration.setAllowCredentials(true);

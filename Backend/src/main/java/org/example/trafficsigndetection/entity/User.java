@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.example.trafficsigndetection.enums.Role;
 
 @Entity
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Data
 @Builder
 @AllArgsConstructor
@@ -49,8 +51,8 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (role.name().isEmpty()) {
-            role = Role.USER;
+        if (this.role == null) {
+            this.role = Role.USER;
         }
     }
 }

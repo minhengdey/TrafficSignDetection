@@ -22,9 +22,10 @@
                 <span>TrafficSign AI</span>
             </div>
             <div class="nav-links">
-                <a href="index.html" class="nav-link">Home</a>
+                <a href="user-dashboard.html" class="nav-link">Dashboard</a>
+                <a href="profile.html" class="nav-link">Profile</a>
                 <a href="upload.html" class="nav-link active">Upload</a>
-                <a href="stats.html" class="nav-link">Statistics</a>
+                <a href="history.html" class="nav-link">History</a>
                 <a href="#" class="nav-link" id="authLink">Login</a>
             </div>
         </div>
@@ -101,7 +102,11 @@
                             </button>
                         </div>
                         <div class="video-preview-wrapper">
-                            <video id="videoPreview" controls></video>
+                            <div style="position:relative; display:inline-block;">
+                                <video id="videoPreview" controls style="display:block;"></video>
+                                <canvas id="overlay"
+                                    style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
+                            </div>
                         </div>
                         <div class="file-details">
                             <div class="detail-item">
@@ -205,6 +210,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
     <script src="js/upload.js"></script>
 </body>
 
