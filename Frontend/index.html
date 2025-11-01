@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Sign Detection - Home</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span>TrafficSign AI</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="stats.html" class="nav-link">Statistics</a>
+                <!-- Navigation links will be updated by JavaScript based on auth status -->
+                <a href="#" class="nav-link" id="authLink">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="home-container">
+        <!-- Redesigned hero section with better visual hierarchy and layout -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span>AI-Powered Detection</span>
+                </div>
+                <h1 class="hero-title">
+                    Detect Traffic Signs<br />
+                    <span class="hero-title-gradient">With AI Precision</span>
+                </h1>
+                <p class="hero-description">
+                    Upload your traffic videos and get real-time detection of traffic signs with precise bounding boxes,
+                    confidence scores, and comprehensive analytics.
+                </p>
+                <div class="hero-actions">
+                    <a href="login.html" class="btn btn-primary btn-large">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        Register Now
+                    </a>
+                    <a href="login.html" class="btn btn-secondary btn-large">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 3v18h18" />
+                            <path d="M18 17V9" />
+                            <path d="M13 17V5" />
+                            <path d="M8 17v-3" />
+                        </svg>
+                        Login
+                    </a>
+                </div>
+            </div>
+
+            <!-- Added visual element for hero section -->
+            <div class="hero-visual">
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <div class="visual-dot"></div>
+                        <div class="visual-dot"></div>
+                        <div class="visual-dot"></div>
+                    </div>
+                    <div class="visual-content">
+                        <div class="detection-preview">
+                            <div class="detection-box detection-box-1"></div>
+                            <div class="detection-box detection-box-2"></div>
+                            <div class="detection-box detection-box-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
