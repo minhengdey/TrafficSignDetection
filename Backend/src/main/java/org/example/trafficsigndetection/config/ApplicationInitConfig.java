@@ -1,11 +1,13 @@
 package org.example.trafficsigndetection.config;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.example.trafficsigndetection.entity.User;
 import org.example.trafficsigndetection.enums.Role;
+import org.example.trafficsigndetection.exception.AppException;
 import org.example.trafficsigndetection.repository.TrafficSignTypeRepository;
 import org.example.trafficsigndetection.repository.UserRepository;
 import org.example.trafficsigndetection.service.RoboflowService;
@@ -27,6 +29,7 @@ public class ApplicationInitConfig {
     RoboflowService roboflowService;
 
     @Bean
+    @Transactional(rollbackOn = Exception.class)
     ApplicationRunner init(UserRepository usersRepository, TrafficSignTypeRepository trafficSignTypeRepository) {
         return args -> {
             if (!usersRepository.existsByUsernameAndRole("admin", Role.ADMIN)) {

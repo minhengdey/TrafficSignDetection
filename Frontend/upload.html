@@ -35,8 +35,6 @@
         <div class="upload-header">
             <div class="upload-header-content">
                 <h1 class="page-title">Upload & Analyze</h1>
-                <p class="page-description">Upload your traffic video and let our AI detect and analyze traffic signs in
-                    real-time</p>
             </div>
             <div class="upload-stats">
                 <div class="stat-item">
@@ -77,7 +75,7 @@
                                     stroke-width="2">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
-                                <span>Max 500MB</span>
+                                <span>Max 100MB</span>
                             </div>
                             <div class="requirement-item">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -175,7 +173,7 @@
                         <p id="processingStatus">Analyzing video for traffic signs...</p>
                         <div class="processing-info">
                             <div class="info-item">
-                                <span class="info-label">Video ID:</span>
+                                <span class="info-label">Video URL: </span>
                                 <span id="videoId" class="info-value"></span>
                             </div>
                             <div class="info-item">
@@ -187,24 +185,7 @@
                 </div>
             </div>
 
-            <div class="upload-sidebar">
-                <div class="recent-uploads">
-                    <div class="recent-header">
-                        <h2>Recent Uploads</h2>
-                        <button class="btn-text" onclick="location.reload()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="23 4 23 10 17 10" />
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-                    <div id="recentList" class="recent-list">
-                        Will be populated by JavaScript
-                    </div>
-                </div>
-            </div>
+            <!-- Sidebar removed: recent uploads moved to history.html -->
         </div>
     </main>
 

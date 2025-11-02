@@ -31,12 +31,11 @@ public class AdminStatsService {
     }
 
     public Map<String, Object> detectionsOverTime() {
-        // Simple grouping by date from detections.detectedAt
         List<Object[]> rows = detectionRepository.findAll().stream()
                 .collect(Collectors.groupingBy(d -> d.getDetectedAt().toLocalDate(), Collectors.counting()))
                 .entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Object[] { e.getKey().toString(), e.getValue() })
-                .collect(Collectors.toList());
+                .toList();
 
         List<String> labels = new ArrayList<>();
         List<Long> values = new ArrayList<>();
@@ -56,7 +55,7 @@ public class AdminStatsService {
                 .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
 
         List<Map.Entry<String, Long>> list = counts.entrySet().stream()
-                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue())).limit(10).collect(Collectors.toList());
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue())).limit(10).toList();
         List<String> labels = list.stream().map(Map.Entry::getKey).collect(Collectors.toList());
         List<Long> values = list.stream().map(Map.Entry::getValue).collect(Collectors.toList());
         Map<String, Object> out = new HashMap<>();

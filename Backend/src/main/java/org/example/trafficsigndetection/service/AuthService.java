@@ -5,6 +5,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -51,6 +52,7 @@ public class AuthService {
     @Value("${signer_key}")
     String SIGNER_KEY;
 
+    @Transactional(rollbackOn = AppException.class)
     public UserResponse register (UserRequest request) {
         if (userRepository.existsByUsername(request.getUsername()) ||
                 userRepository.existsByEmail(request.getEmail())) {
@@ -99,7 +101,6 @@ public class AuthService {
 
     public UserResponse getMyInfo(String token) {
         Jwt decodedJwt = jwtDecoder.decode(token);
-        String role = decodedJwt.getClaim("scope");
         String username = decodedJwt.getSubject();
 
         User user = userRepository.findByUsername(username)
@@ -122,6 +123,7 @@ public class AuthService {
         return signedJWT;
     }
 
+    @Transactional(rollbackOn = AppException.class)
     public void logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
         SignedJWT signedJWT = verifyToken(logoutRequest.getToken());
         String id = signedJWT.getJWTClaimsSet().getJWTID();
@@ -130,5 +132,25 @@ public class AuthService {
                 .id(id)
                 .expiryTime(expiryTime)
                 .build());
+    }
+
+    @Transactional(rollbackOn = AppException.class)
+    public UserResponse updateMyInfo(String token, UserRequest userRequest) {
+        Jwt decodedJwt = jwtDecoder.decode(token);
+        String username = decodedJwt.getSubject();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.getUsername().equals(userRequest.getUsername()) && userRepository.existsByUsername(userRequest.getUsername())) {
+            throw new AppException(ErrorCode.USERNAME_EXISTED);
+        }
+
+        if (!user.getEmail().equals(userRequest.getEmail()) && userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+
+        userMapper.update(user, userRequest);
+        return userMapper.toResponse(userRepository.save(user));
     }
 }

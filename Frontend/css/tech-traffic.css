@@ -1,0 +1,75 @@
+@import 'variables.css';
+
+/* Tech Traffic utility classes */
+
+.bounding-box--ai {
+    border: 2px dashed var(--neon);
+    box-shadow: 0 8px 20px rgba(0, 255, 156, 0.2);
+    animation: neon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(0, 255, 156, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(0, 255, 156, 0.4);
+    }
+}
+
+.highlight-warning {
+    background: rgba(250, 204, 21, 0.15);
+    border: 1px solid var(--traffic-yellow);
+    color: var(--traffic-yellow);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+
+.highlight-danger {
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid var(--traffic-red);
+    color: var(--traffic-red);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+
+.highlight-success {
+    background: rgba(0, 255, 156, 0.15);
+    border: 1px solid var(--neon);
+    color: var(--neon);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+
+.gradient-tech-bg {
+    background: var(--gradient-tech);
+}
+
+.gradient-blue-bg {
+    background: var(--gradient-blue);
+}
+
+.text-neon {
+    color: var(--neon);
+    text-shadow: 0 0 10px rgba(0, 255, 156, 0.5);
+}
+
+.text-traffic-yellow {
+    color: var(--traffic-yellow);
+}
+
+.text-traffic-red {
+    color: var(--traffic-red);
+}
+
+.border-neon {
+    border-color: var(--neon);
+}
+
+.border-traffic-yellow {
+    border-color: var(--traffic-yellow);
+}
+
+.border-traffic-red {
+    border-color: var(--traffic-red);
+}

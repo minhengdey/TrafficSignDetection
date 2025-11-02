@@ -1,20 +1,4 @@
-/* Shared theme variables and base components derived from upload.css */
-:root {
-    --bg: #0f172a;
-    --bg-soft: #0b1220;
-    --bg-card: #0f1724;
-    --bg-secondary: #0b1224;
-    --bg-tertiary: #0b1228;
-    --text-primary: #e6eef8;
-    --text-secondary: #9aa6b8;
-    --text-muted: #6b7280;
-    --accent-blue: #3b82f6;
-    --accent-blue-2: #60a5fa;
-    --border-color: rgba(255, 255, 255, 0.06);
-    --radius: 10px;
-    --radius-lg: 14px;
-    --container-max: 1200px;
-}
+@import 'variables.css';
 
 /* Base resets */
 * {
@@ -39,7 +23,7 @@ a {
 
 /* Navbar */
 .navbar {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+    background: linear-gradient(135deg, var(--tech-blue) 0%, var(--neon) 50%, var(--traffic-yellow) 100%);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;

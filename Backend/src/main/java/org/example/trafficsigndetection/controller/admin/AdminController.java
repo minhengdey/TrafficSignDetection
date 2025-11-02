@@ -3,155 +3,226 @@ package org.example.trafficsigndetection.controller.admin;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.example.trafficsigndetection.dto.request.TrafficSignTypeRequest;
 import org.example.trafficsigndetection.dto.request.UserRequest;
-import org.example.trafficsigndetection.entity.Detection;
-import org.example.trafficsigndetection.entity.TrafficSignType;
-import org.example.trafficsigndetection.entity.Video;
-import org.example.trafficsigndetection.dto.response.UserResponse;
+import org.example.trafficsigndetection.dto.response.*;
 import org.example.trafficsigndetection.service.*;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-    AdminUserService adminUserService;
-    AdminVideoService adminVideoService;
-    AdminSignTypeService adminSignTypeService;
-    AdminDetectionService adminDetectionService;
+    UserService userService;
+    VideoService videoService;
+    TrafficSignTypeService trafficSignTypeService;
+    DetectionService detectionService;
     AdminStatsService adminStatsService;
 
-    // Users
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> listUsers() {
-        return ResponseEntity.ok(adminUserService.listUsers());
+    public ApiResponse<Page<UserResponse>> listUsers(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.<Page<UserResponse>>builder()
+                .code(1000)
+                .result(userService.listUsers(pageable))
+                .message("Successfully retrieved users")
+                .build();
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(adminUserService.getUser(id));
+    public ApiResponse<UserResponse> getUser(@PathVariable Long id) {
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(userService.getUser(id))
+                .message("Successfully retrieved user")
+                .build();
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
-        return ResponseEntity.ok(adminUserService.createUser(request));
+    public ApiResponse<UserResponse> createUser(@RequestBody UserRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(userService.createUser(request))
+                .message("User created successfully")
+                .build();
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
-        return ResponseEntity.ok(adminUserService.updateUser(id, request));
+    public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(userService.updateUser(id, request))
+                .message("User updated successfully")
+                .build();
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        adminUserService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("User deleted successfully")
+                .build();
     }
 
-    // Videos
     @GetMapping("/videos")
-    public ResponseEntity<List<Video>> listVideos() {
-        return ResponseEntity.ok(adminVideoService.listVideos());
+    public ApiResponse<Page<VideoResponse>> listVideos(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.<Page<VideoResponse>>builder()
+                .code(1000)
+                .result(videoService.listVideos(pageable))
+                .message("Successfully retrieved videos")
+                .build();
     }
 
     @GetMapping("/videos/{id}")
-    public ResponseEntity<Video> getVideo(@PathVariable Long id) {
-        return ResponseEntity.ok(adminVideoService.getVideo(id));
+    public ApiResponse<VideoResponse> getVideo(@PathVariable Long id) {
+        return ApiResponse.<VideoResponse>builder()
+                .code(1000)
+                .result(videoService.getVideo(id))
+                .message("Successfully retrieved video")
+                .build();
     }
 
     @DeleteMapping("/videos/{id}")
-    public ResponseEntity<Void> deleteVideo(@PathVariable Long id) {
-        adminVideoService.deleteVideo(id);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> deleteVideo(@PathVariable Long id) {
+        videoService.deleteVideo(id);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Video deleted successfully")
+                .build();
     }
 
     @PostMapping("/videos/{id}/reprocess")
-    public ResponseEntity<Video> reprocessVideo(@PathVariable Long id) {
-        return ResponseEntity.ok(adminVideoService.reprocessVideo(id));
+    public ApiResponse<VideoResponse> reprocessVideo(@PathVariable Long id) {
+        return ApiResponse.<VideoResponse>builder()
+                .code(1000)
+                .result(videoService.reprocessVideo(id))
+                .message("Video reprocessed successfully")
+                .build();
     }
 
     @GetMapping("/videos/{id}/detections")
-    public ResponseEntity<List<Detection>> getVideoDetections(@PathVariable Long id) {
-        Video v = adminVideoService.getVideo(id);
-        return ResponseEntity.ok(v.getDetections());
+    public ApiResponse<Integer> getVideoDetections(@PathVariable Long id) {
+        return ApiResponse.<Integer>builder()
+                .code(1000)
+                .result(detectionService.countDetectionsByVideoId(id))
+                .message("Successfully retrieved video detections")
+                .build();
     }
 
-    // Sign types
     @GetMapping("/sign-types")
-    public ResponseEntity<List<TrafficSignType>> listSignTypes() {
-        return ResponseEntity.ok(adminSignTypeService.listSignTypes());
+    public ApiResponse<Page<TrafficSignTypeResponse>> listSignTypes(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return ApiResponse.<Page<TrafficSignTypeResponse>>builder()
+                .code(1000)
+                .result(trafficSignTypeService.listSignTypes(pageable))
+                .message("Successfully retrieved sign types")
+                .build();
     }
 
     @GetMapping("/sign-types/{id}")
-    public ResponseEntity<TrafficSignType> getSignType(@PathVariable Long id) {
-        return ResponseEntity.ok(adminSignTypeService.getSignType(id));
-    }
-
-    @PostMapping("/sign-types")
-    public ResponseEntity<TrafficSignType> createSignType(@RequestBody TrafficSignType payload) {
-        return ResponseEntity.ok(adminSignTypeService.createSignType(payload));
+    public ApiResponse<TrafficSignTypeResponse> getSignType(@PathVariable Long id) {
+        return ApiResponse.<TrafficSignTypeResponse>builder()
+                .code(1000)
+                .result(trafficSignTypeService.getSignType(id))
+                .message("Successfully retrieved sign type")
+                .build();
     }
 
     @PutMapping("/sign-types/{id}")
-    public ResponseEntity<TrafficSignType> updateSignType(@PathVariable Long id, @RequestBody TrafficSignType payload) {
-        return ResponseEntity.ok(adminSignTypeService.updateSignType(id, payload));
+    public ApiResponse<TrafficSignTypeResponse> updateSignType(@PathVariable Long id,
+            @RequestBody TrafficSignTypeRequest request) {
+        return ApiResponse.<TrafficSignTypeResponse>builder()
+                .code(1000)
+                .result(trafficSignTypeService.updateSignType(id, request))
+                .message("Sign type updated successfully")
+                .build();
     }
 
     @DeleteMapping("/sign-types/{id}")
-    public ResponseEntity<Void> deleteSignType(@PathVariable Long id) {
-        adminSignTypeService.deleteSignType(id);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> deleteSignType(@PathVariable Long id) {
+        trafficSignTypeService.deleteSignType(id);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Sign type deleted successfully")
+                .build();
     }
 
-    // Detections
     @GetMapping("/detections")
-    public ResponseEntity<List<Detection>> listDetections() {
-        return ResponseEntity.ok(adminDetectionService.listDetections());
+    public ApiResponse<Page<DetectionResponse>> listDetections(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ApiResponse.<Page<DetectionResponse>>builder()
+                .result(detectionService.listDetections(pageable))
+                .code(1000)
+                .message("Successfully retrieved detections")
+                .build();
     }
 
     @GetMapping("/detections/{id}")
-    public ResponseEntity<Detection> getDetection(@PathVariable Long id) {
-        return ResponseEntity.ok(adminDetectionService.getDetection(id));
-    }
-
-    @PutMapping("/detections/{id}")
-    public ResponseEntity<Detection> updateDetection(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        String label = body.containsKey("label") ? (String) body.get("label") : null;
-        Float confidence = body.containsKey("confidence") ? Float.valueOf(String.valueOf(body.get("confidence")))
-                : null;
-        Long signTypeId = body.containsKey("signTypeId") ? Long.valueOf(String.valueOf(body.get("signTypeId"))) : null;
-        return ResponseEntity.ok(adminDetectionService.updateDetection(id, label, confidence, signTypeId));
+    public ApiResponse<DetectionResponse> getDetection(@PathVariable Long id) {
+        return ApiResponse.<DetectionResponse>builder()
+                .code(1000)
+                .result(detectionService.getDetection(id))
+                .message("Successfully retrieved detection")
+                .build();
     }
 
     @DeleteMapping("/detections/{id}")
-    public ResponseEntity<Void> deleteDetection(@PathVariable Long id) {
-        adminDetectionService.deleteDetection(id);
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> deleteDetection(@PathVariable Long id) {
+        detectionService.deleteDetection(id);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Detection deleted successfully")
+                .build();
     }
 
-    // Stats
     @GetMapping("/stats/overview")
-    public ResponseEntity<Map<String, Object>> overview() {
-        return ResponseEntity.ok(adminStatsService.overview());
+    public ApiResponse<Map<String, Object>> overview() {
+        return ApiResponse.<Map<String, Object>>builder()
+                .code(1000)
+                .result(adminStatsService.overview())
+                .message("Successfully retrieved stats overview")
+                .build();
     }
 
     @GetMapping("/stats/detections-over-time")
-    public ResponseEntity<Map<String, Object>> detectionsOverTime() {
-        return ResponseEntity.ok(adminStatsService.detectionsOverTime());
+    public ApiResponse<Map<String, Object>> detectionsOverTime() {
+        return ApiResponse.<Map<String, Object>>builder()
+                .code(1000)
+                .result(adminStatsService.detectionsOverTime())
+                .message("Successfully retrieved detections-over-time stats")
+                .build();
     }
 
     @GetMapping("/stats/top-signs")
-    public ResponseEntity<Map<String, Object>> topSigns() {
-        return ResponseEntity.ok(adminStatsService.topSigns());
+    public ApiResponse<Map<String, Object>> topSigns() {
+        return ApiResponse.<Map<String, Object>>builder()
+                .code(1000)
+                .result(adminStatsService.topSigns())
+                .message("Successfully retrieved top signs stats")
+                .build();
     }
 
     @GetMapping("/stats/videos-by-status")
-    public ResponseEntity<Map<String, Object>> videosByStatus() {
-        return ResponseEntity.ok(adminStatsService.videosByStatus());
+    public ApiResponse<Map<String, Object>> videosByStatus() {
+        return ApiResponse.<Map<String, Object>>builder()
+                .code(1000)
+                .result(adminStatsService.videosByStatus())
+                .message("Successfully retrieved videos-by-status stats")
+                .build();
     }
 }

@@ -24,7 +24,6 @@
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="upload.html" class="nav-link">Upload</a>
-                <a href="stats.html" class="nav-link">Statistics</a>
                 <a href="#" class="nav-link" id="authLink">Login</a>
             </div>
         </div>
@@ -32,80 +31,49 @@
 
     <main class="container">
         <div class="results-container">
-            Header
-            <div class="results-header">
-                <div>
-                    <a href="upload.html" class="back-link">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M19 12H5M12 19l-7-7 7-7" />
-                        </svg>
-                        Back to Upload
-                    </a>
-                    <h1 class="page-title" id="videoTitle">Video Results</h1>
-                    <div class="video-meta">
-                        <span id="videoFilename"></span>
-                        <span class="separator">•</span>
-                        <span id="detectionCount"></span>
-                        <span class="separator">•</span>
-                        <span id="videoDuration"></span>
+            <div class="results-body">
+                <div class="video-section">
+                    <div class="video-wrapper">
+                        <video id="videoPlayer" controls></video>
+                        <canvas id="detectionCanvas"></canvas>
                     </div>
-                </div>
-                <button id="downloadBtn" class="btn btn-secondary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download Results
-                </button>
-            </div>
-
-            Video Player with Canvas Overlay
-            <div class="video-section">
-                <div class="video-wrapper">
-                    <video id="videoPlayer" controls></video>
-                    <canvas id="detectionCanvas"></canvas>
-                </div>
-                <div class="video-controls">
-                    <div class="playback-info">
-                        <span id="currentTime">0:00</span>
-                        <span class="separator">/</span>
-                        <span id="totalTime">0:00</span>
-                    </div>
-                    <div class="detection-info">
-                        <span id="currentDetections">No detections at this time</span>
-                    </div>
-                </div>
-            </div>
-
-            Detections Panel
-            <div class="detections-panel">
-                <div class="panel-header">
-                    <h2>Detections</h2>
-                    <div class="panel-controls">
-                        <div class="filter-group">
-                            <label for="signTypeFilter">Filter by type:</label>
-                            <select id="signTypeFilter" class="filter-select">
-                                <option value="all">All Signs</option>
-                            </select>
+                    <div class="video-controls">
+                        <div class="playback-info">
+                            <span id="currentTime">0:00</span>
+                            <span class="separator">/</span>
+                            <span id="totalTime">0:00</span>
                         </div>
-                        <div class="filter-group">
-                            <label for="confidenceFilter">Min confidence:</label>
-                            <input type="range" id="confidenceFilter" min="0" max="100" value="0"
-                                class="confidence-slider">
-                            <span id="confidenceValue">0%</span>
+                        <div class="detection-info">
+                            <span id="currentDetections">No detections at this time</span>
                         </div>
                     </div>
                 </div>
+                <div class="detections-panel">
+                    <div class="panel-header">
+                        <h2>Detections</h2>
+                        <div class="panel-controls">
+                            <div class="filter-group">
+                                <label for="signTypeFilter">Filter by type:</label>
+                                <select id="signTypeFilter" class="filter-select">
+                                    <option value="all">All Signs</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="confidenceFilter">Min confidence:</label>
+                                <input type="range" id="confidenceFilter" min="0" max="100" value="0"
+                                    class="confidence-slider">
+                                <span id="confidenceValue">0%</span>
+                            </div>
+                        </div>
+                    </div>
 
-                <div id="detectionsList" class="detections-list">
-                    Will be populated by JavaScript
+                    <div id="detectionsList" class="detections-list">
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
 
+    </main>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/nav.js"></script>

@@ -47,16 +47,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             await auth.register(email, password, username)
+            // Show success briefly then redirect immediately to the login page
             showSuccess('Account created! Redirecting to login...')
-            setTimeout(() => {
-                window.location.href = 'login.html'
-            }, 1000)
+            // Ensure the footer link points to the login page (in case user clicks)
+            const toggleLink = document.getElementById('toggleMode')
+            const toggleMsg = document.getElementById('toggleMsg')
+            const toggleText = document.getElementById('toggleText')
+            if (toggleLink) toggleLink.setAttribute('href', 'login.html')
+            if (toggleMsg) toggleMsg.textContent = 'Already have an account?'
+            if (toggleText) toggleText.textContent = 'Login'
+            // Redirect after a short delay so the user sees the success message
+            setTimeout(() => { window.location.href = 'login.html' }, 800)
         } catch (err) {
             const msg = (err && (err.message || err.result && err.result.message)) || JSON.stringify(err) || 'Registration failed'
             showError(msg)
         } finally {
             submitBtn.disabled = false
-            submitBtn.textContent = 'Sign Up'
+            submitBtn.textContent = 'Register'
         }
     })
 

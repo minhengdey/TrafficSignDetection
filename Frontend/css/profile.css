@@ -1,0 +1,39 @@
+@import 'variables.css';
+
+/* Tab navigation styles: segmented control */
+.tabs {
+    display: inline-flex;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 4px;
+}
+
+.tab-btn {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-radius: 6px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.tab-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background: var(--gradient-blue);
+    color: var(--muted-white);
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+}
+
+/* Make buttons look consistent with .btn-full layout when needed */
+.tab-btn:focus {
+    outline: 2px solid rgba(29, 78, 216, 0.4);
+    outline-offset: 2px;
+}

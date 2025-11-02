@@ -24,6 +24,13 @@ public enum ErrorCode {
     DETECTION_NOT_FOUND(1013, "Detection not found", HttpStatus.NOT_FOUND),
     COOKIE_NOT_FOUND(1010, "Cookie not found", HttpStatus.BAD_REQUEST),
     ROBOFLOW_ERROR(1011, "Error calling Roboflow API", HttpStatus.BAD_REQUEST),
+    REPROCESS_VIDEO_ERROR(1012, "Reprocess video failed", HttpStatus.BAD_REQUEST),
+    VIDEO_ERROR(1013, "File is required", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(1014, "File too large", HttpStatus.BAD_REQUEST),
+    DETECTION_ERROR(1015, "Cannot detect video", HttpStatus.BAD_REQUEST),
+    UPDATE_INFO_ERROR(1016, "Cannot update info", HttpStatus.BAD_REQUEST),
+    USERNAME_EXISTED(1017, "Username existed", HttpStatus.BAD_REQUEST),
+    EMAIL_EXISTED(1018, "Email existed", HttpStatus.BAD_REQUEST),
     ;
 
     int code;
