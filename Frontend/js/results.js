@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const confidenceFilter = document.getElementById("confidenceFilter")
   const confidenceValue = document.getElementById("confidenceValue")
   const detectionsList = document.getElementById("detectionsList")
-  const downloadBtn = document.getElementById("downloadBtn")
 
   const ctx = detectionCanvas.getContext("2d")
 
@@ -64,12 +63,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let filteredDetections = []
   let currentFrameDetections = []
   let previousFrameDetections = [] // Track previous frame to detect new appearances
-  
+
   // Track recently spoken detection ids to avoid repeating speech too often
   let lastSpokenDetections = new Set()
   let lastSpokenAt = 0
   const SPEECH_COOLDOWN = 1500 // ms: minimum time between speech announcements
-  
+
   // Track if video is playing
   let isVideoPlaying = false
   let allowSpeech = false
@@ -77,11 +76,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Load voices early
   let voicesLoaded = false
   let vietnameseVoice = null
+  let useEnglishLabels = false
   const speechQueue = []
-  
+
   // Map of sign type code -> display name fetched from backend (per-page, in-memory only)
   const signTypeNameMap = new Map()
-  
+
   // Persistent sign-type cache key and TTL (ms)
   const SIGN_TYPE_LS_KEY = 'traffic_sign_type_cache_v1'
   const SIGN_TYPE_TTL = 24 * 60 * 60 * 1000 // 24 hours
@@ -113,13 +113,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Fallback: giọng mặc định
       voices[0]
 
-    if (vietnameseVoice) {
-      console.log('✓ Selected Vietnamese voice:', vietnameseVoice.name, `(${vietnameseVoice.lang})`)
+    // If there are no voices available at all, prefer English labels and don't attempt vi-specific selection
+    if (!voices || voices.length === 0) {
+      console.warn('No available speech voices were detected; speech synthesis may not be available.')
+      vietnameseVoice = null
+      useEnglishLabels = true
       voicesLoaded = true
-    } else {
-      console.warn('⚠ No Vietnamese voice found, using default voice')
-      voicesLoaded = true
+      return
     }
+
+    // Determine whether the selected voice is actually Vietnamese
+    const isVi = vietnameseVoice && vietnameseVoice.lang && vietnameseVoice.lang.toLowerCase().startsWith('vi')
+    if (isVi) {
+      useEnglishLabels = false
+      console.log('✓ Selected Vietnamese voice:', vietnameseVoice.name, `(${vietnameseVoice.lang})`)
+    } else {
+      // Selected voice is not Vietnamese; prefer English labels for speech and log which voice will be used
+      useEnglishLabels = true
+      if (vietnameseVoice) console.log('✓ Selected voice (fallback, not Vietnamese):', vietnameseVoice.name, `(${vietnameseVoice.lang})`)
+      else console.warn('No suitable Vietnamese voice found; will use English labels when speaking')
+    }
+    voicesLoaded = true
   }
 
   // Load voices immediately
@@ -135,13 +149,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Ask backend for the authoritative filepath and set src immediately
       if (videoId) {
-        const metaResp = await fetch(CONFIG.API_BASE_URL + '/api/video/' + videoId, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        if (metaResp.ok) {
-          const metaPayload = await metaResp.json().catch(() => ({}))
-          const meta = metaPayload.result || metaPayload
+        try {
+          const meta = await (window.apiFetch ? window.apiFetch(`/api/video/${videoId}`) : null)
           // prefer presignedGetUrl when available
           const fileUrl = meta && (meta.presignedGetUrl || meta.presignedGet || meta.filepath || meta.filePath || meta.videoUrl)
           if (fileUrl) {
@@ -149,6 +158,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             videoPlayer.src = safe
             try { videoPlayer.load() } catch (e) { /* ignore */ }
           }
+        } catch (err) {
+          // fallback: ignore metadata fetch failures here
+          console.warn('Failed to load video metadata for quickSetVideoSrc', err)
         }
       }
     } catch (err) {
@@ -210,15 +222,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function loadVideoData() {
     try {
       // Request video metadata + detections from the backend at /api/video/{id}
-      const response = await fetch(CONFIG.API_BASE_URL + '/api/video/' + videoId, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload && (payload.message || payload.error) || 'Failed to load results')
-      // Support either flat or wrapped ApiResponse
-      const result = payload.result || payload
+      // Fetch video metadata + detections from backend; apiFetch unwraps ApiResponse
+      const result = await (window.apiFetch ? window.apiFetch(`/api/video/${videoId}`) : (async () => { const r = await fetch(CONFIG.API_BASE_URL + '/api/video/' + videoId, { credentials: 'include', headers: { 'Content-Type': 'application/json' } }); const p = await r.json().catch(() => ({})); if (!r.ok) throw new Error(p && (p.message || p.error) || 'Failed to load results'); return p.result || p; })())
 
       // Backend may return either 'frames' (VideoResult) or 'detections' (persisted Detection entities)
       if (result.frames && Array.isArray(result.frames)) {
@@ -317,10 +322,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn('Failed to fetch /api/video/{id}', err)
       }
 
-      // Update UI
-      videoFilename.textContent = videoData.filename
-      detectionCount.textContent = `${videoData.detectionCount} detections`
-      videoDuration.textContent = formatDuration(videoData.duration)
+      // Update UI (guard elements in case markup was changed)
+      if (typeof videoFilename !== 'undefined' && videoFilename) videoFilename.textContent = videoData.filename || ''
+      if (typeof detectionCount !== 'undefined' && detectionCount) detectionCount.textContent = (typeof videoData.detectionCount === 'number' ? `${videoData.detectionCount} detections` : '')
+      if (typeof videoDuration !== 'undefined' && videoDuration) videoDuration.textContent = formatDuration(videoData.duration)
 
       // Set video source
       if (videoData && videoData.videoUrl) {
@@ -530,28 +535,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (allowSpeech && isVideoPlaying && !videoPlayer.paused) {
       try {
         const now = Date.now()
-        
+
         // Find truly NEW detections (not in previous frame)
         const previousIds = new Set(previousFrameDetections.map(d => d.id))
-        const newDetections = currentFrameDetections.filter(d => 
+        const newDetections = currentFrameDetections.filter(d =>
           !previousIds.has(d.id) && !lastSpokenDetections.has(d.id)
         )
 
         if (newDetections.length > 0 && (now - lastSpokenAt) > SPEECH_COOLDOWN) {
           // Ensure sign-type info is available
           const uniqueCodes = [...new Set(newDetections.map(d => d.signType))]
-          
+
           Promise.all(uniqueCodes.map(code => fetchSignTypeInfo(code))).then((infos) => {
             // Only proceed if video is still playing
             if (!isVideoPlaying || videoPlayer.paused) return
-            
+
             // Build localized names for speech
             const namesForSpeech = []
             newDetections.forEach(detection => {
               const entry = signTypeNameMap.get(detection.signType)
               let name = null
               if (entry) {
-                name = vietnameseVoice ? (entry.name_vi || entry.name_en) : (entry.name_en || entry.name_vi)
+                // If we decided to prefer English labels (e.g., no Vietnamese voice available), use name_en first
+                name = useEnglishLabels ? (entry.name_en || entry.name_vi) : (entry.name_vi || entry.name_en)
               }
               if (!name) {
                 name = formatSignType(detection.signType)
@@ -565,7 +571,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               // try {
               //   speakText(vietnameseVoice ? 'Phát hiện' : 'Attention')
               // } catch (e) { /* ignore */ }
-              
+
               // Speak the sign names
               setTimeout(() => {
                 if (isVideoPlaying && !videoPlayer.paused) {
@@ -576,9 +582,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               // Mark as spoken
               newDetections.forEach(d => lastSpokenDetections.add(d.id))
               lastSpokenAt = now
-              
+
               // Clear spoken status after some time
-              setTimeout(() => { 
+              setTimeout(() => {
                 newDetections.forEach(d => lastSpokenDetections.delete(d.id))
               }, 8000)
             }
@@ -623,18 +629,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       sentences.forEach((s) => {
         try {
           const u = new SpeechSynthesisUtterance(s)
-          u.lang = 'vi-VN'
+          u.lang = useEnglishLabels ? 'en-US' : 'vi-VN'
           u.rate = 0.9
           u.pitch = 1.0
           u.volume = 1.0
           u._triedFallback = false
 
           // Prefer pre-selected vietnameseVoice if available
-          if (vietnameseVoice) {
+          if (vietnameseVoice && !useEnglishLabels) {
             u.voice = vietnameseVoice
           } else {
             const voices = window.speechSynthesis.getVoices() || []
-            const preferred = voices.find(v => /vi|vietnam|vietnamese/i.test(v.name)) || voices.find(v => v.lang === 'vi-VN') || voices[0]
+            // Prefer an English voice when using English labels, otherwise prefer Vietnamese
+            const preferred = useEnglishLabels
+              ? (voices.find(v => /^en(-|_)/i.test(v.lang)) || voices.find(v => /english/i.test(v.name)) || voices[0])
+              : (voices.find(v => /vi|vietnam|vietnamese/i.test(v.name)) || voices.find(v => v.lang === 'vi-VN') || voices[0])
             if (preferred) u.voice = preferred
           }
 
@@ -674,14 +683,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Process queued utterances sequentially
   function processSpeechQueue() {
     if (!('speechSynthesis' in window)) return
-    
+
     // Don't process queue if video is not playing
     if (!isVideoPlaying || videoPlayer.paused) {
       // Clear queue when video stops
       speechQueue.length = 0
       return
     }
-    
+
     try {
       // If speech is ongoing, wait until it finishes
       if (window.speechSynthesis.speaking) return
@@ -734,9 +743,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!code) return null
     try {
       // First check in-memory map
-      try { 
+      try {
         const existing = signTypeNameMap.get(code)
-        if (existing) return existing 
+        if (existing) return existing
       } catch (e) { }
 
       // Next check localStorage cache
@@ -748,27 +757,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       } catch (e) { /* ignore */ }
 
-      const resp = await fetch(`${CONFIG.API_BASE_URL}/api/sign-type/${encodeURIComponent(code)}`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      const payload = await resp.json().catch(() => ({}))
-      const result = payload.result || payload || {}
-      
+      const result = await (window.apiFetch ? window.apiFetch(`/api/sign-type/${encodeURIComponent(code)}`) : (async () => { const r = await fetch(`${CONFIG.API_BASE_URL}/api/sign-type/${encodeURIComponent(code)}`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } }); const p = await r.json().catch(() => ({})); return p.result || p || {} })())
+
       const name_vi = result.name_vi || result.name || null
       const name_en = result.name_en || result.name || null
       const description = result.description || result.message || ''
-      
+
       // Store in per-page map
-      try { 
-        signTypeNameMap.set(code, { code, name_vi, name_en, description }) 
+      try {
+        signTypeNameMap.set(code, { code, name_vi, name_en, description })
       } catch (e) { /* ignore */ }
-      
+
       // Persist to localStorage
-      try { 
-        saveSignTypeEntryToStorage(code, { name_vi, name_en, description }) 
+      try {
+        saveSignTypeEntryToStorage(code, { name_vi, name_en, description })
       } catch (e) { /* ignore */ }
-      
+
       // Update rendered list items
       try {
         const display = (name_vi || name_en) ? (name_vi || name_en) : formatSignType(code)
@@ -776,7 +780,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           el.textContent = display
         })
       } catch (err) { /* ignore DOM update errors */ }
-      
+
       return { code, name_vi, name_en, description }
     } catch (err) {
       console.warn('Failed to fetch sign-type', code, err)
@@ -817,8 +821,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const width = bbox.width * scaleX
       const height = bbox.height * scaleY
 
-      // Draw bounding box
-      ctx.strokeStyle = "#3b82f6"
+      // Draw bounding box (use CSS variable --neon for AI bounding boxes when available)
+      const bboxColor = getComputedStyle(document.documentElement).getPropertyValue('--neon').trim() || '#00FF9C'
+      ctx.strokeStyle = bboxColor
       ctx.lineWidth = 2
       ctx.strokeRect(x, y, width, height)
 
@@ -836,7 +841,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const labelX = Math.max(x, 4)
       const labelY = Math.max(y - textHeight - 8, 4)
 
-      ctx.fillStyle = "rgba(59, 130, 246, 0.9)"
+      // Label background (use tech-blue for contrast)
+      const labelBg = getComputedStyle(document.documentElement).getPropertyValue('--tech-blue').trim() || '#1D4ED8'
+      ctx.fillStyle = labelBg
       ctx.fillRect(labelX, labelY, textWidth + 12, textHeight + 4)
 
       // Draw label text
@@ -845,34 +852,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
   }
 
-  // Filter event listeners
-  signTypeFilter.addEventListener("change", filterDetections)
+  // Filter event listeners (guard elements in case markup changed)
+  if (signTypeFilter) signTypeFilter.addEventListener("change", filterDetections)
 
-  confidenceFilter.addEventListener("input", (e) => {
-    confidenceValue.textContent = e.target.value + "%"
-    filterDetections()
-  })
-
-  // Download results
-  downloadBtn.addEventListener("click", () => {
-    const results = {
-      video: videoData,
-      detections: detectionsData,
-      summary: {
-        totalDetections: detectionsData.length,
-        signTypes: [...new Set(detectionsData.map((d) => d.signType))],
-        averageConfidence: detectionsData.reduce((sum, d) => sum + d.confidence, 0) / detectionsData.length,
-      },
-    }
-
-    const blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `results_${videoId}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  })
+  if (confidenceFilter) {
+    confidenceFilter.addEventListener("input", (e) => {
+      if (confidenceValue) confidenceValue.textContent = e.target.value + "%"
+      filterDetections()
+    })
+  }
 
   // Utility functions
   function formatDuration(seconds) {

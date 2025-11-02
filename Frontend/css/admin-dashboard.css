@@ -1,3 +1,5 @@
+@import 'variables.css';
+
 .stats-container {
   max-width: var(--container-max, 1200px);
   margin: 0 auto;
@@ -39,7 +41,8 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 255, 156, 0.15);
+  border-color: var(--neon);
 }
 
 .summary-icon {
@@ -209,8 +212,9 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 500;
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(29, 78, 216, 0.2);
   color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
 }
 
 .empty-activity {
@@ -222,6 +226,78 @@
 .empty-activity svg {
   color: var(--text-muted);
   margin-bottom: 1rem;
+}
+
+/* Simple tab styles and layout to keep page within viewport */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+main.container {
+  height: calc(100vh - 64px);
+  display: flex;
+  align-items: stretch;
+}
+
+.stats-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-bar button {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.tab-bar button.active {
+  background: var(--gradient-blue);
+  color: var(--muted-white);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+}
+
+.tab-panels {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+}
+
+.tab-panel {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* Make inner content arranged so vertical scrolling is minimized */
+.tab-panel .charts-row,
+.tab-panel .summary-grid,
+.tab-panel .activity-section {
+  margin: 0;
 }
 
 /* Responsive */

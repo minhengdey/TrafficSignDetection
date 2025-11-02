@@ -2,6 +2,8 @@ package org.example.trafficsigndetection.repository;
 
 import org.example.trafficsigndetection.entity.User;
 import org.example.trafficsigndetection.enums.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +15,5 @@ public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByEmail(String email);
     boolean existsByUsernameAndRole(String username, Role role);
     Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
+    Page<User> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

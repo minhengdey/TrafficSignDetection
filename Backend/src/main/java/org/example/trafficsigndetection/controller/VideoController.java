@@ -1,5 +1,9 @@
 package org.example.trafficsigndetection.controller;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.example.trafficsigndetection.dto.response.ApiResponse;
 import org.example.trafficsigndetection.dto.response.VideoResponse;
 import org.example.trafficsigndetection.dto.video.VideoResult;
@@ -16,38 +20,25 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/video")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class VideoController {
-    private final VideoProcessingService videoProcessingService;
-    private final VideoService videoService;
-
-    public VideoController(VideoProcessingService videoProcessingService, VideoService videoService) {
-        this.videoProcessingService = videoProcessingService;
-        this.videoService = videoService;
-    }
-
-    @PostMapping("/detection")
-    public ResponseEntity<VideoResult> uploadVideo(@RequestParam("file") MultipartFile file) {
-        try {
-            VideoResult result = videoProcessingService.processVideo(file);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new VideoResult("error", null));
-        }
-    }
+    VideoProcessingService videoProcessingService;
+    VideoService videoService;
 
     @PostMapping(value = "/detection", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> detectFromUrl(@RequestBody Map<String, Object> payload) {
+    public ApiResponse<?> detectFromUrl(@RequestBody Map<String, Object> payload) {
         try {
             if (payload == null || !payload.containsKey("videoUrl")) {
-                return ResponseEntity.badRequest().body(Map.of("error", "videoUrl is required"));
+                log.error("videoUrl is required");
+                throw new AppException(ErrorCode.DETECTION_ERROR);
             }
 
             String videoUrl = String.valueOf(payload.get("videoUrl"));
-            // optional videoId passed through
+
             Object vidObj = payload.get("videoId");
             Long videoId = null;
             try {
@@ -65,18 +56,21 @@ public class VideoController {
             if (videoId != null)
                 resp.put("videoId", videoId);
 
-            return ResponseEntity.ok(resp);
+            return ApiResponse.<Map<String, Object>>builder()
+                    .code(1000)
+                    .message("Successfully detected")
+                    .result(resp)
+                    .build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            throw new AppException(ErrorCode.DETECTION_ERROR);
         }
     }
 
     @GetMapping("/{id}")
     public ApiResponse<VideoResponse> getVideoById(@PathVariable("id") Long id) {
         return ApiResponse.<VideoResponse>builder()
-                .result(videoService.findByVideoId(id))
+                .result(videoService.getVideo(id))
                 .code(1000)
                 .build();
     }

@@ -12,8 +12,8 @@ import lombok.experimental.FieldDefaults;
 import org.example.trafficsigndetection.enums.Role;
 
 @Entity
-@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Data
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

@@ -1,29 +1,4 @@
-:root {
-  /* Primary palette (aligned with upload.css) */
-  --bg: #0f172a;
-  --bg-primary: #0f172a;
-  /* alias for legacy usage */
-  --bg-soft: #0b1220;
-  --bg-card: #0f1724;
-  --bg-secondary: #0b1224;
-  --bg-tertiary: #0b1228;
-
-  --text-primary: #e6eef8;
-  --text-secondary: #9aa6b8;
-  --text-muted: #6b7280;
-
-  --accent-blue: #3b82f6;
-  --accent-blue-hover: #2563eb;
-  --accent-yellow: #eab308;
-
-  --success: #22c55e;
-  --error: #ef4444;
-
-  --border-color: rgba(255, 255, 255, 0.06);
-  --radius: 10px;
-  --radius-lg: 14px;
-  --container-max: 1200px;
-}
+@import 'variables.css';
 
 * {
   margin: 0;
@@ -41,7 +16,8 @@ body {
 
 /* Navbar */
 .navbar {
-  background-color: var(--bg-secondary);
+  background: var(--tech-blue);
+  color: var(--muted-white);
   border-bottom: 1px solid var(--border-color);
   padding: 1rem 0;
   position: sticky;
@@ -161,7 +137,7 @@ body {
 }
 
 .hero-title-gradient {
-  background: linear-gradient(135deg, var(--accent-blue) 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -270,9 +246,10 @@ body {
 
 .detection-box {
   position: absolute;
-  border: 2px solid var(--accent-blue);
+  border: 2px dashed var(--neon);
   border-radius: 4px;
   animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(0, 255, 156, 0.3);
 }
 
 .detection-box-1 {
@@ -352,8 +329,9 @@ body {
 }
 
 .feature-card:hover {
-  border-color: var(--accent-blue);
+  border-color: var(--neon);
   transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 255, 156, 0.15);
 }
 
 .feature-icon {
@@ -413,13 +391,15 @@ body {
   transform: translateX(-50%);
   width: 48px;
   height: 48px;
-  background-color: var(--accent-blue);
+  background: var(--gradient-tech);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--dark-slate);
+  box-shadow: 0 4px 12px rgba(0, 255, 156, 0.3);
 }
 
 .step-icon {
@@ -526,12 +506,15 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--accent-blue);
-  color: var(--text-primary);
+  background: var(--gradient-blue);
+  color: var(--muted-white);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--accent-blue-hover);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -542,6 +525,23 @@ body {
 
 .btn-secondary:hover {
   background-color: var(--bg-card);
+}
+
+/* Disabled button state - make it visually clear and unclickable */
+.btn[disabled],
+.btn.disabled,
+button[disabled].btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(30%);
+}
+
+/* Prevent hover styles when disabled */
+.btn[disabled]:hover,
+.btn.disabled:hover,
+button[disabled].btn:hover {
+  background-color: inherit;
 }
 
 .btn-full {
@@ -630,15 +630,15 @@ body {
 }
 
 .error-message {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--error);
-  color: var(--error);
+  background-color: rgba(220, 38, 38, 0.15);
+  border: 1px solid var(--traffic-red);
+  color: #fca5a5;
 }
 
 .success-message {
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid var(--success);
-  color: var(--success);
+  background-color: rgba(0, 255, 156, 0.15);
+  border: 1px solid var(--neon);
+  color: var(--neon);
 }
 
 .auth-footer {

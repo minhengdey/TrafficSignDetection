@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const storedRoleRaw = auth.getRole && auth.getRole()
     const storedRole = storedRoleRaw ? String(storedRoleRaw).toUpperCase() : null
     if (storedRole === 'ADMIN') {
-      window.location.href = 'stats.html'
+      window.location.href = 'admin-dashboard.html'
     } else {
       window.location.href = 'upload.html'
     }
@@ -48,13 +48,19 @@ document.addEventListener("DOMContentLoaded", () => {
   emailInput.setAttribute("autocomplete", "username")
 
   toggleModeLink.addEventListener("click", (e) => {
+    // If the link has a real href (not '#'), allow the browser to navigate to that page
+    const href = toggleModeLink && toggleModeLink.getAttribute ? toggleModeLink.getAttribute('href') : null
+    if (href && href !== '#') {
+      // allow default navigation (no preventDefault)
+      return
+    }
     e.preventDefault()
     isLoginMode = !isLoginMode
 
     if (isLoginMode) {
-      authTitle.textContent = "Sign In"
+      authTitle.textContent = "Login"
       authSubtitle.textContent = "Enter your credentials to access your account"
-      submitBtn.textContent = "Sign In"
+      submitBtn.textContent = "Login"
       confirmPasswordGroup.style.display = "none"
       usernameGroup.style.display = "none"
       confirmPasswordInput.removeAttribute("required")
@@ -79,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
       usernameInput.setAttribute("required", "")
       usernameInput.disabled = false
       toggleMsg.textContent = "Already have an account?"
-      toggleText.textContent = "Sign in"
+      toggleText.textContent = "Login"
       emailLabel.textContent = "Email"
       emailInput.type = "email"
       emailInput.placeholder = "you@example.com"
@@ -127,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!auth || typeof auth.login !== 'function') {
           showError('Auth module not available. Please refresh the page.')
           submitBtn.disabled = false
-          submitBtn.textContent = "Sign In"
+          submitBtn.textContent = "Login"
           return
         }
         const loginResult = await auth.login(identifier, password)
@@ -150,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const role = roleRaw ? String(roleRaw).toUpperCase().replace(/^ROLE_/, '') : 'USER'
         setTimeout(() => {
           if (role === 'ADMIN') {
-            window.location.href = 'stats.html'
+            window.location.href = 'admin-dashboard.html'
           } else {
             // Regular user -> internal area with tabs (Upload, Profile, History, Logout)
             window.location.href = 'upload.html'
@@ -166,11 +172,14 @@ document.addEventListener("DOMContentLoaded", () => {
           return
         }
         await auth.register(email, password, username)
-        showSuccess("Account created! Please sign in.")
+        // If registration happened on the combined login/register page, switch back to login
+        // and show success message without navigating away. If this script is running on a
+        // standalone register page, that page's script will redirect to login.html instead.
+        showSuccess("Account created! You can now login.")
         isLoginMode = true
-        authTitle.textContent = "Sign In"
+        authTitle.textContent = "Login"
         authSubtitle.textContent = "Enter your credentials to access your account"
-        submitBtn.textContent = "Sign In"
+        submitBtn.textContent = "Login"
         confirmPasswordGroup.style.display = "none"
         usernameGroup.style.display = "none"
         confirmPasswordInput.removeAttribute("required")
@@ -179,19 +188,21 @@ document.addEventListener("DOMContentLoaded", () => {
         usernameInput.disabled = true
         toggleMsg.textContent = "Don't have an account?"
         toggleText.textContent = "Register"
-        emailLabel.textContent = "Email"
-        emailInput.type = "email"
-        emailInput.placeholder = "you@example.com"
-        setTimeout(() => {
-          window.location.href = "login.html"
-        }, 800)
+        emailLabel.textContent = "Username"
+        emailInput.type = "text"
+        emailInput.placeholder = "yourusername"
+        passwordInput.setAttribute("autocomplete", "current-password")
+        // Make the footer 'Login' link go to the standalone login page so user can navigate there
+        if (toggleModeLink) toggleModeLink.setAttribute('href', 'login.html')
+        if (toggleMsg) toggleMsg.textContent = 'Already have an account?'
+        if (toggleText) toggleText.textContent = 'Login'
       }
     } catch (error) {
       // If backend returns structured errors, try to map them; otherwise fallback to message
       const msg = (error && (error.message || (error.result && error.result.message))) || JSON.stringify(error) || "An error occurred. Please try again."
       showError(msg)
       submitBtn.disabled = false
-      submitBtn.textContent = isLoginMode ? "Sign In" : "Register"
+      submitBtn.textContent = isLoginMode ? "Login" : "Register"
     }
   })
 

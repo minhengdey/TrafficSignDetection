@@ -2,7 +2,6 @@ package org.example.trafficsigndetection.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.trafficsigndetection.entity.Video;
 import org.example.trafficsigndetection.enums.Role;
 
 import java.time.LocalDateTime;
@@ -19,5 +18,5 @@ public class UserResponse {
     String email;
     Role role;
     LocalDateTime createdAt;
-    List<Video> videos;
+    List<VideoResponse> videos;
 }

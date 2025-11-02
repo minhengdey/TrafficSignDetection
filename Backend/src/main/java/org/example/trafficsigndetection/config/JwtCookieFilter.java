@@ -37,7 +37,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("jwt".equals(cookie.getName())) { // Cookie chứa JWT
+                if ("jwt".equals(cookie.getName())) {
                     jwtToken = cookie.getValue();
                     break;
                 }
@@ -46,7 +46,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 
         if (jwtToken != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                Jwt jwt = customJwtDecoder.decode(jwtToken); // Xác thực JWT bằng CustomJwtDecoder
+                Jwt jwt = customJwtDecoder.decode(jwtToken);
 
                 JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
                 jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");

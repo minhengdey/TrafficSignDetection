@@ -2,7 +2,6 @@ package org.example.trafficsigndetection.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.trafficsigndetection.entity.Detection;
 import org.example.trafficsigndetection.entity.User;
 import org.example.trafficsigndetection.enums.VideoStatus;
 
@@ -20,7 +19,7 @@ public class VideoResponse {
     String filename;
     String filepath;
     Long filesize;
-    VideoStatus status = VideoStatus.UPLOADED;
+    VideoStatus status;
     LocalDateTime uploadedAt;
-    List<Detection> detections;
+    List<DetectionResponse> detections;
 }

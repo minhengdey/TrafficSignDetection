@@ -13,6 +13,7 @@ import org.example.trafficsigndetection.enums.VideoStatus;
 
 @Entity
 @Data
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

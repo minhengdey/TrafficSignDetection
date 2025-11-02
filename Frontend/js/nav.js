@@ -42,9 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const links = []
             if (authed) {
                 if (currentRole === 'ADMIN') {
-                    // Admin: Dashboard, Stats, Profile, Logout
+                    // Admin: Dashboard, Profile, Logout
                     links.push({ href: 'admin-dashboard.html', label: 'Dashboard' })
-                    links.push({ href: 'stats.html', label: 'Stats' })
                     links.push({ href: 'profile.html', label: 'Profile' })
                     links.push({ href: '#', label: 'Logout', id: 'logoutLink' })
                 } else {

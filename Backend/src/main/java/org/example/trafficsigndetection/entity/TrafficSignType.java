@@ -1,5 +1,6 @@
 package org.example.trafficsigndetection.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 
 @Entity
 @Data
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,7 +19,6 @@ import lombok.experimental.FieldDefaults;
 @Table(name = "traffic_sign_types")
 public class TrafficSignType {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
     @Column(nullable = false, unique = true, length = 50)
@@ -33,13 +34,7 @@ public class TrafficSignType {
     String description;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "signType")
+    @OneToMany(mappedBy = "signType", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Detection> detections = new ArrayList<>();
-
-    public TrafficSignType(String code, String name_en, String description) {
-        this.code = code;
-        this.name_en = name_en;
-        this.description = description;
-    }
 }
 

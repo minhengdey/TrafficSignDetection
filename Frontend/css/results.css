@@ -1,7 +1,10 @@
+@import 'variables.css';
+
 .results-container {
   max-width: var(--container-max, 1200px);
   margin: 0 auto;
   padding: 2rem 1.25rem;
+  position: relative;
 }
 
 /* Header */
@@ -26,6 +29,19 @@
 
 .back-link:hover {
   color: var(--text-primary);
+}
+
+/* Make the back button fixed to the top-left edge */
+#backBtn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.results-header.compact {
+  margin-top: 1rem;
 }
 
 .video-meta {
@@ -103,6 +119,27 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
+}
+
+/* Layout: place video and detections side-by-side when space allows */
+.results-body {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.results-body .video-section {
+  flex: 1 1 0;
+  /* remove bottom margin when in side-by-side layout */
+  margin-bottom: 0;
+}
+
+.results-body .detections-panel {
+  flex: 0 0 380px;
+  /* fixed width for detections column */
+  max-width: 45%;
+  min-width: 260px;
+  height: auto;
 }
 
 .panel-header {
@@ -225,13 +262,15 @@
 }
 
 .detection-item:hover {
-  border-color: var(--accent-blue);
+  border-color: var(--neon);
   background-color: var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(0, 255, 156, 0.2);
 }
 
 .detection-item.active {
-  border-color: var(--accent-blue);
+  border-color: var(--neon);
   background-color: var(--bg-secondary);
+  box-shadow: 0 0 12px rgba(0, 255, 156, 0.3);
 }
 
 .detection-thumbnail {
@@ -296,15 +335,18 @@
 }
 
 .confidence-badge.high {
-  color: var(--success);
+  color: var(--neon);
+  border: 1px solid var(--neon);
 }
 
 .confidence-badge.medium {
-  color: var(--accent-yellow);
+  color: var(--traffic-yellow);
+  border: 1px solid var(--traffic-yellow);
 }
 
 .confidence-badge.low {
-  color: var(--error);
+  color: var(--traffic-red);
+  border: 1px solid var(--traffic-red);
 }
 
 .bbox-info {
@@ -323,33 +365,74 @@
   margin-bottom: 1rem;
 }
 
-/* Video Card Styles for History Page */
+/* Video Card Styles for History Page - grid of square tiles */
+/* Video list: allow cards to be rectangular and readable rather than forcing square tiles.
+   Use a larger minimum card width so each card has space for thumbnail + stats. */
 .videos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  /* Full-width layout with 3 columns on wide screens. Falls back to 2 columns
+     on medium widths and 1 column on small devices via media queries below. */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem 1.25rem;
+  align-items: start;
+  height: auto;
+  margin: 0;
+  padding: 1rem 0;
 }
 
 .video-card {
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.007));
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
   transition: all 0.2s;
+  /* let the card size itself but keep a sensible minimum so content is not squashed */
+  min-height: 260px;
+  height: auto;
+}
+
+/* Thumbnail area at top of each tile */
+.video-thumb {
+  /* give thumbnail a fixed height so the card layout is predictable */
+  flex: 0 0 auto;
+  height: 60px;
+  background: linear-gradient(180deg, var(--bg-tertiary), var(--bg-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-muted);
 }
 
 .video-card:hover {
-  border-color: var(--accent-blue);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--neon);
+  box-shadow: 0 8px 20px rgba(0, 255, 156, 0.12);
 }
 
 .video-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1.5rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .video-info {
@@ -358,35 +441,115 @@
 }
 
 .video-title {
-  font-size: 1.125rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   word-break: break-word;
 }
 
 .video-status {
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .video-card-body {
-  padding: 1.5rem;
+  padding: 0.75rem 1rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: visible;
+  /* allow inline stats to show; inner area may scroll if needed */
+}
+
+.video-card-actions {
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.01);
+}
+
+/* Ensure header and actions don't shrink and card content stays balanced */
+.video-card-header,
+.video-card-actions {
+  flex: 0 0 auto;
+}
+
+.video-card-body {
+  /* allow stats area to scroll if content overflows the tile */
+  overflow: auto;
 }
 
 .video-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
 }
+
+/* Make thumbnails and any images inside the card fit nicely */
+.video-card img,
+.video-card video,
+.video-card canvas {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+/* Hide page vertical overflow to avoid scrolling on history page (tiles will paginate instead)
+   This assumes the pagination controls are separate and will remain visible below the grid. */
+/* Only hide vertical overflow on the history page to avoid impacting other pages */
+body.history-page {
+  /* Re-enable normal vertical scrolling for the history page */
+  overflow-y: auto;
+}
+
+/* Make the main results container use the full viewport width on the history page
+   so the videos grid can span the entire screen. Keep small padding to avoid
+   touching the edges. This is scoped to the history page to avoid impacting other pages. */
+body.history-page .results-container {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Typography for the history page: match site-wide sizes for consistency */
+body.history-page .video-title {
+  /* match other page title sizes (e.g. filter-select/title sizes) */
+  font-size: 0.95rem;
+}
+
+body.history-page .video-meta,
+body.history-page .video-status,
+body.history-page .detection-time,
+body.history-page .video-card .stat-label {
+  /* use the common small label size used across the site */
+  font-size: 0.875rem;
+}
+
+body.history-page .video-card .stat-value {
+  font-size: 1rem;
+}
+
+/* Do not override .btn sizing here – keep global button sizing for consistency */
 
 /* Responsive */
 @media (max-width: 768px) {
   .results-header {
+    flex-direction: column;
+  }
+
+  /* On small screens stack video and detections */
+  .results-body {
     flex-direction: column;
   }
 
@@ -420,6 +583,18 @@
   }
 
   .video-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* On small screens, show one column only so cards remain readable */
+  .videos-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Medium breakpoint: reduce to 2 columns for medium-width screens */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .videos-list {
     grid-template-columns: repeat(2, 1fr);
   }
 }

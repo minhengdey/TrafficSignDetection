@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/results.css">
 </head>
 
-<body>
+<body class="history-page">
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -36,22 +36,18 @@
             <div class="stats-header">
                 <div>
                     <h1 class="page-title">Upload History</h1>
-                    <p class="page-description">View all your uploaded videos and detection results</p>
                 </div>
-                <div class="date-filter">
-                    <button id="refreshBtn" class="btn btn-secondary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="23 4 23 10 17 10" />
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                        </svg>
-                        Refresh
-                    </button>
-                </div>
+                <!-- Refresh button removed per design request -->
             </div>
 
             <div id="videosList" class="videos-list">
                 <!-- Will be populated by JavaScript -->
+            </div>
+            <div id="videosPagination" class="pagination-controls"
+                style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px;">
+                <button id="videosPrev" class="btn btn-secondary btn-sm">Previous</button>
+                <div id="videosPageInfo" style="min-width:120px; text-align:center;">Page 1</div>
+                <button id="videosNext" class="btn btn-secondary btn-sm">Next</button>
             </div>
         </div>
     </main>
