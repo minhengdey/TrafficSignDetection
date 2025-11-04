@@ -1,0 +1,46 @@
+/* Tech Traffic Color Palette */
+:root {
+  /* Primary Colors */
+  --tech-blue: #1D4ED8;
+  --dark-slate: #1E293B;
+  --traffic-yellow: #FACC15;
+  --traffic-red: #DC2626;
+  --muted-white: #F8FAFC;
+  --neon: #00FF9C;
+
+  /* Accent variations */
+  --accent-blue: #1D4ED8;
+  --accent-blue-2: #3B82F6;
+  --accent-blue-hover: #1e40af;
+  --accent-yellow: #FACC15;
+  --accent-yellow-hover: #eab308;
+
+  /* Background layers */
+  --bg-primary: #1E293B;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #334155;
+  --bg-card: #1E293B;
+
+  /* Text colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  /* Border and dividers */
+  --border-color: #334155;
+
+  /* Status colors */
+  --success: #00FF9C;
+  --error: #DC2626;
+  --warning: #FACC15;
+
+  /* Spacing & radius */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --container-max: 1200px;
+
+  /* Gradients */
+  --gradient-tech: linear-gradient(135deg, #1D4ED8 0%, #00FF9C 50%, #FACC15 100%);
+  --gradient-blue: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%);
+  --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1E293B 100%);
+}

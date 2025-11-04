@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload History - Traffic Sign Detection</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/results.css">
+</head>
+
+<body class="history-page">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span>TrafficSign AI</span>
+            </div>
+            <div class="nav-links">
+                <a href="user-dashboard.html" class="nav-link">Dashboard</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="history.html" class="nav-link active">History</a>
+                <a href="#" class="nav-link" id="logoutLink">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="stats-container">
+            <div class="stats-header">
+                <div>
+                    <h1 class="page-title">Upload History</h1>
+                </div>
+                <!-- Refresh button removed per design request -->
+            </div>
+
+            <div id="videosList" class="videos-list">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <div id="videosPagination" class="pagination-controls"
+                style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px;">
+                <button id="videosPrev" class="btn btn-secondary btn-sm">Previous</button>
+                <div id="videosPageInfo" style="min-width:120px; text-align:center;">Page 1</div>
+                <button id="videosNext" class="btn btn-secondary btn-sm">Next</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/history.js"></script>
+</body>
+
+</html>

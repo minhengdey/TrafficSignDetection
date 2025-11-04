@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Traffic Sign Detection</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span>TrafficSign AI</span>
+            </div>
+            <div class="nav-links">
+                <a href="user-dashboard.html" class="nav-link">Dashboard</a>
+                <a href="profile.html" class="nav-link active">Profile</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="history.html" class="nav-link">History</a>
+                <a href="#" class="nav-link" id="logoutLink">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="auth-container">
+            <div class="auth-card" style="max-width: 600px;">
+                <div class="auth-header">
+                    <h1>My Profile</h1>
+                    <p>View and update your account information</p>
+                </div>
+
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="successMessage" class="success-message" style="display: none;"></div>
+
+                <div class="tabs" role="tablist" aria-label="Profile sections"
+                    style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button id="tabProfileBtn" class="tab-btn btn btn-light active" role="tab" aria-selected="true"
+                        aria-controls="profileTab">Update Profile</button>
+                    <button id="tabPasswordBtn" class="tab-btn btn btn-light" role="tab" aria-selected="false"
+                        aria-controls="passwordTab">Change Password</button>
+                </div>
+
+                <div id="profileTab">
+                    <form id="profileForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="updateBtn">Update Profile</button>
+                    </form>
+                </div>
+
+                <div id="passwordTab" style="display: none;">
+                    <div style="margin-top: 0; padding-top: 0; border-top: none;">
+                        <form id="passwordForm" class="auth-form">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <input type="password" id="currentPassword" name="currentPassword" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <input type="password" id="newPassword" name="newPassword" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm New Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full" id="passwordBtn">Update
+                                Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+
+</html>

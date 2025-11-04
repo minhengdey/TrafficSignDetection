@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Traffic Sign Detection</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span>TrafficSign AI</span>
+            </div>
+            <div class="nav-links">
+                <a href="admin-dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="#" class="nav-link" id="logoutLink">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="tab-bar">
+    </div>
+
+    <main class="container">
+        <div class="stats-container">
+            <div class="stats-header">
+                <div>
+                    <h1 class="page-title">Admin Dashboard</h1>
+                </div>
+
+                <!-- Video details modal -->
+                <div id="videoDetailModal" class="modal"
+                    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
+                    <div class="modal-content"
+                        style="background:var(--bg-card); color:var(--text-primary); border-radius:8px; max-width:900px; width:95%; max-height:85vh; overflow:auto; padding:16px; box-sizing:border-box;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                            <div>
+                                <h2 id="modalVideoTitle" style="margin:0;">Video details</h2>
+                                <div id="modalVideoMeta"
+                                    style="color:var(--text-secondary); font-size:0.95rem; margin-top:4px;"></div>
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <button id="modalCloseBtn" class="btn btn-secondary">Close</button>
+                            </div>
+                        </div>
+
+                        <section id="modalVideoInfo" style="margin-bottom:12px;">
+                            <!-- Video info populated dynamically -->
+                        </section>
+
+                        <section id="modalListSection">
+                            <h3 id="modalListTitle" style="margin-top:0;">Detections</h3>
+                            <div id="modalDetectionsList" class="activity-list"
+                                style="max-height:50vh; overflow:auto; padding-top:6px;"></div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Form Modal (Create / Edit) -->
+            <div id="userFormModal" class="modal"
+                style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1100;">
+                <div class="modal-content"
+                    style="background:var(--bg-card); color:var(--text-primary); border-radius:8px; max-width:520px; width:95%; max-height:80vh; overflow:auto; padding:16px; box-sizing:border-box;">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <h2 id="userFormTitle" style="margin:0;">User</h2>
+                            <div id="userFormMeta"
+                                style="color:var(--text-secondary); font-size:0.95rem; margin-top:4px;"></div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button id="userFormCancelBtn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+
+                    <section style="margin-bottom:12px;">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <label>Username
+                                <input id="userFormUsername" type="text" class="form-input" placeholder="username" />
+                            </label>
+                            <label>Email
+                                <input id="userFormEmail" type="email" class="form-input"
+                                    placeholder="email@example.com" />
+                            </label>
+                            <label>Password
+                                <input id="userFormPassword" type="password" class="form-input"
+                                    placeholder="" />
+                            </label>
+                        </div>
+                    </section>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button id="userFormSaveBtn" class="btn btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-bar">
+                <button class="active" data-tab="overview">Overview</button>
+                <button data-tab="users">Users</button>
+                <button data-tab="videos">Videos</button>
+                <button data-tab="signs">Signs</button>
+            </div>
+
+            <div class="tab-panels">
+                <div class="tab-panel" id="tab-overview">
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-icon" style="background-color: rgba(29, 78, 216, 0.08);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" style="color: #1D4ED8;">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="8.5" cy="7" r="4" />
+                                    <line x1="20" y1="8" x2="20" y2="14" />
+                                    <line x1="23" y1="11" x2="17" y2="11" />
+                                </svg>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Total Users</div>
+                                <div class="summary-value" id="totalUsers">0</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon" style="background-color: rgba(34, 197, 94, 0.08);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" style="color: #22c55e;">
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Total Videos</div>
+                                <div class="summary-value" id="totalVideos">0</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon" style="background-color: rgba(250, 204, 21, 0.12);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" style="color: #FACC15;">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                                    <polyline points="2 17 12 22 22 17" />
+                                    <polyline points="2 12 12 17 22 12" />
+                                </svg>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Total Detections</div>
+                                <div class="summary-value" id="totalDetections">0</div>
+                            </div>
+                        </div>
+
+                        <div class="summary-card">
+                            <div class="summary-icon" style="background-color: rgba(139, 92, 246, 0.1);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" style="color: #8b5cf6;">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                    <path d="M2 17l10 5 10-5" />
+                                    <path d="M2 12l10 5 10-5" />
+                                </svg>
+                            </div>
+                            <div class="summary-content">
+                                <div class="summary-label">Sign Types</div>
+                                <div class="summary-value" id="totalSignTypes">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h2>Detections Over Time</h2>
+                                <p>Daily detection count trend</p>
+                            </div>
+                            <div class="chart-wrapper"><canvas id="detectionsChart"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h2>Top Traffic Signs</h2>
+                                <p>Most detected traffic signs</p>
+                            </div>
+                            <div class="chart-wrapper"><canvas id="topSignsChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-users">
+                    <div class="chart-header"
+                        style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                        <div>
+                            <h2>Recent Users</h2>
+                            <p>Latest registered users</p>
+                        </div>
+                        <div>
+                            <button id="createUserBtn" class="btn btn-primary btn-sm">Create User</button>
+                        </div>
+                    </div>
+                    <div id="recentUsersList" class="activity-list"></div>
+                    <div id="recentUsersPagination" class="pagination-controls"
+                        style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px;">
+                        <button id="usersPrev" class="btn btn-secondary btn-sm">Previous</button>
+                        <div id="usersPageInfo" style="min-width:120px; text-align:center;">Page 1</div>
+                        <button id="usersNext" class="btn btn-secondary btn-sm">Next</button>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-videos">
+                    <div class="activity-section" style="margin-top:12px;">
+                        <div class="activity-header">
+                            <h2>Recent Videos</h2>
+                        </div>
+                        <div id="recentVideosList" class="activity-list"></div>
+                        <div id="recentVideosPagination" class="pagination-controls"
+                            style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px;">
+                            <button id="videosPrev" class="btn btn-secondary btn-sm">Previous</button>
+                            <div id="videosPageInfo" style="min-width:120px; text-align:center;">Page 1</div>
+                            <button id="videosNext" class="btn btn-secondary btn-sm">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-signs">
+                    <div class="chart-header">
+                        <h2>Traffic Sign Types</h2>
+                    </div>
+                    <div id="signTypesList" class="activity-list"></div>
+                    <div id="signTypesPagination" class="pagination-controls"
+                        style="display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px;">
+                        <button id="signsPrev" class="btn btn-secondary btn-sm">Previous</button>
+                        <div id="signsPageInfo" style="min-width:120px; text-align:center;">Page 1</div>
+                        <button id="signsNext" class="btn btn-secondary btn-sm">Next</button>
+                    </div>
+                </div>
+
+                <!-- Detections tab removed: detections are visible in video detail modal -->
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab switching logic for admin dashboard
+        (function () {
+            function initTabs() {
+                // If multiple .tab-bar elements exist (the template had an empty one at the top),
+                // pick the one that actually contains tab buttons. Fall back to the first.
+                const tabBars = Array.from(document.querySelectorAll('.tab-bar'))
+                const tabBar = tabBars.find(tb => tb.querySelectorAll('button').length > 0) || document.querySelector('.tab-bar')
+                if (!tabBar) return
+                const buttons = Array.from(tabBar.querySelectorAll('button'))
+                const panels = Array.from(document.querySelectorAll('.tab-panel'))
+
+                function show(index) {
+                    panels.forEach((p, i) => { p.style.display = i === index ? 'block' : 'none' })
+                    buttons.forEach((b, i) => { b.classList.toggle('active', i === index) })
+                }
+
+                buttons.forEach((btn, i) => btn.addEventListener('click', () => show(i)))
+                // initial
+                show(0)
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTabs)
+            else initTabs()
+        })()
+    </script>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+
+</html>

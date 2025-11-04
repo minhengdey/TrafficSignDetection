@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Traffic Sign Detection</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span>TrafficSign AI</span>
+            </div>
+            <div class="nav-links">
+                <a href="user-dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="history.html" class="nav-link">History</a>
+                <a href="#" class="nav-link" id="logoutLink">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="home-container">
+            <section class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                        <span>Welcome back, <span id="userName">User</span></span>
+                    </div>
+                    <h1 class="hero-title">
+                        Your Traffic Sign<br />
+                        <span class="hero-title-gradient">Detection Dashboard</span>
+                    </h1>
+                    <p class="hero-description">
+                        Upload videos, track your detection history, and manage your profile all in one place.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="upload.html" class="btn btn-primary btn-large">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                            Upload Video
+                        </a>
+                        <a href="history.html" class="btn btn-secondary btn-large">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            View History
+                        </a>
+                    </div>
+
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="userVideos">0</div>
+                            <div class="stat-label">Videos Uploaded</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="userDetections">0</div>
+                            <div class="stat-label">Signs Detected</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="userAccuracy">0%</div>
+                            <div class="stat-label">Avg Confidence</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="visual-card">
+                        <div class="visual-header">
+                            <div class="visual-dot"></div>
+                            <div class="visual-dot"></div>
+                            <div class="visual-dot"></div>
+                        </div>
+                        <div class="visual-content">
+                            <div class="detection-preview">
+                                <div class="detection-box detection-box-1"></div>
+                                <div class="detection-box detection-box-2"></div>
+                                <div class="detection-box detection-box-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/user-dashboard.js"></script>
+</body>
+
+</html>
