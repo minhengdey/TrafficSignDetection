@@ -29,9 +29,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UploadController {
-
     static long MAX_FILE_SIZE = 100L * 1024L * 1024L;
-    static Duration PRESIGNED_URL_DURATION = Duration.ofHours(24);
 
     B2Service b2Service;
     VideoService videoService;
@@ -77,20 +75,7 @@ public class UploadController {
             Map<String, Object> response = new HashMap<>();
             response.put("key", keySaved);
             response.put("url", url);
-
-            if (savedVideo == null) {
-                throw new AppException(ErrorCode.VIDEO_NOT_FOUND);
-            }
-
             response.put("videoId", savedVideo.getId());
-
-            try {
-                String presignedGet = b2Service.presignGetUrl(keySaved, PRESIGNED_URL_DURATION);
-                response.put("presignedGetUrl", presignedGet);
-            } catch (Exception ex) {
-                log.warn("Failed to generate presignedGetUrl for key {}: {}", keySaved, ex.getMessage());
-                throw new AppException(ErrorCode.FILE_UPLOAD_ERROR);
-            }
 
             return ApiResponse.<Map<String, Object>>builder()
                     .message("Successfully uploaded video")

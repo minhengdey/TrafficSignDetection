@@ -62,7 +62,6 @@ public class VideoController {
                     .result(resp)
                     .build();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new AppException(ErrorCode.DETECTION_ERROR);
         }
     }

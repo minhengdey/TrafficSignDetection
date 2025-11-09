@@ -2,6 +2,10 @@ package org.example.trafficsigndetection.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.example.trafficsigndetection.entity.TrafficSignType;
 import org.example.trafficsigndetection.repository.TrafficSignTypeRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,25 +18,27 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoboflowService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final TrafficSignTypeRepository repo;
+    RestTemplate restTemplate = new RestTemplate();
+    ObjectMapper mapper = new ObjectMapper();
+    TrafficSignTypeRepository trafficSignTypeRepository;
 
+    @NonFinal
     @Value("${roboflow.api.key:}")
     private String ROBOFLOW_API_KEY;
 
+    @NonFinal
     @Value("${roboflow.project-slug}")
     private String ROBOFLOW_MODEL;
 
-    @Value("${roboflow.workspace:}")
-    private String ROBOFLOW_WORKSPACE;
-
+    @NonFinal
     @Value("${roboflow.model.version}")
     private String ROBOFLOW_VERSION;
 
-    private static final Map<String, SignData> SIGN_DATA_MAP = new LinkedHashMap<>();
+    static Map<String, SignData> SIGN_DATA_MAP = new LinkedHashMap<>();
 
     static {
         SIGN_DATA_MAP.put("warn_speed_bumper", new SignData(1, "Gờ giảm tốc", "Speed Bump Warning", "Cảnh báo: Phía trước có gờ giảm tốc."));
@@ -92,29 +98,14 @@ public class RoboflowService {
         SIGN_DATA_MAP.put("info_parking", new SignData(55, "Bãi đỗ xe", "Parking", "Khu vực đỗ xe."));
     }
 
-    public RoboflowService(TrafficSignTypeRepository repo) {
-        this.repo = repo;
-    }
-
     public List<String> fetchRoboflowClasses() throws Exception {
-        String projectPath;
-        if (ROBOFLOW_MODEL != null && ROBOFLOW_MODEL.contains("/")) {
-            projectPath = ROBOFLOW_MODEL;
-        } else if (ROBOFLOW_WORKSPACE != null && !ROBOFLOW_WORKSPACE.isBlank()) {
-            projectPath = ROBOFLOW_WORKSPACE + "/" + ROBOFLOW_MODEL;
-        } else {
-            projectPath = ROBOFLOW_MODEL;
-        }
-
         String url = String.format("https://api.roboflow.com/%s/%s?api_key=%s",
-                projectPath, ROBOFLOW_VERSION, ROBOFLOW_API_KEY);
+                ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_API_KEY);
 
         ResponseEntity<String> resp;
         try {
             resp = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
         } catch (HttpClientErrorException he) {
-            String body = he.getResponseBodyAsString();
-            System.err.printf("Roboflow fetch classes failed: %s -> %s\n", he.getStatusCode(), body);
             return Collections.emptyList();
         }
 
@@ -194,7 +185,7 @@ public class RoboflowService {
                 signData = new SignData(null, cls, cls, "");
             }
 
-            Optional<TrafficSignType> existing = repo.findByCode(code);
+            Optional<TrafficSignType> existing = trafficSignTypeRepository.findByCode(code);
             if (existing.isPresent()) {
                 saved.add(existing.get());
                 continue;
@@ -209,7 +200,7 @@ public class RoboflowService {
             item.setName_en(signData.nameEn);
             item.setDescription(signData.description);
 
-            saved.add(repo.save(item));
+            saved.add(trafficSignTypeRepository.save(item));
         }
         return saved;
     }

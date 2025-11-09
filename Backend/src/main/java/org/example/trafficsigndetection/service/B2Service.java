@@ -24,7 +24,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class B2Service {
-
     S3Client s3;
     S3Presigner presigner;
 
@@ -52,21 +51,6 @@ public class B2Service {
     public String getObjectUrl(String key) {
         String normalizedEndpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         return normalizedEndpoint + "/" + bucket + "/" + key;
-    }
-
-    public String presignGetUrl(String key, Duration validFor) {
-        GetObjectRequest getReq = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        GetObjectPresignRequest presignGetReq = GetObjectPresignRequest.builder()
-                .getObjectRequest(getReq)
-                .signatureDuration(validFor)
-                .build();
-
-        PresignedGetObjectRequest presignedGet = presigner.presignGetObject(presignGetReq);
-        return presignedGet.url().toString();
     }
 
     public void assertBucketAccessible() {
