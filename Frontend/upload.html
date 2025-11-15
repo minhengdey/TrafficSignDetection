@@ -32,7 +32,7 @@
     </nav>
 
     <main class="container">
-        <div class="upload-header">
+        <header class="upload-header">
             <div class="upload-header-content">
                 <h1 class="page-title">Upload & Analyze</h1>
             </div>
@@ -46,15 +46,14 @@
                     <div class="stat-label">Signs Detected</div>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div class="upload-grid">
+        <section class="upload-grid">
             <div class="upload-main">
                 <div id="uploadSection" class="upload-section">
                     <div id="dropZone" class="drop-zone">
                         <div class="drop-zone-icon">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.5">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                 <polyline points="17 8 12 3 7 8" />
                                 <line x1="12" y1="3" x2="12" y2="15" />
@@ -64,22 +63,19 @@
                         <p>or click to browse from your device</p>
                         <div class="file-requirements">
                             <div class="requirement-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
                                 <span>MP4, AVI, MOV</span>
                             </div>
                             <div class="requirement-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
                                 <span>Max 100MB</span>
                             </div>
                             <div class="requirement-item">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
                                 <span>HD Quality Recommended</span>
@@ -87,70 +83,63 @@
                         </div>
                         <input type="file" id="fileInput" accept="video/*" hidden>
                     </div>
+                </div>
 
-                    <div id="previewSection" class="preview-section" style="display: none;">
-                        <div class="preview-header">
-                            <h3>Video Preview</h3>
-                            <button id="cancelBtn" class="btn-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="video-preview-wrapper">
-                            <div style="position:relative; display:inline-block;">
-                                <video id="videoPreview" controls style="display:block;"></video>
-                                <canvas id="overlay"
-                                    style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
-                            </div>
-                        </div>
-                        <div class="file-details">
-                            <div class="detail-item">
-                                <span class="detail-label">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                                        <polyline points="13 2 13 9 20 9" />
-                                    </svg>
-                                    Filename
-                                </span>
-                                <span id="fileName" class="detail-value"></span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <path
-                                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                    </svg>
-                                    Size
-                                </span>
-                                <span id="fileSize" class="detail-value"></span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    Duration
-                                </span>
-                                <span id="fileDuration" class="detail-value"></span>
-                            </div>
-                        </div>
-                        <button id="uploadBtn" class="btn btn-primary btn-full">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7" />
-                                <polyline points="7 9 12 4 17 9" />
-                                <line x1="12" y1="4" x2="12" y2="16" />
+                <div id="previewSection" class="preview-section" style="display: none;">
+                    <div class="preview-header">
+                        <h3>Video Preview</h3>
+                        <button id="cancelBtn" class="btn-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
-                            Start Processing
                         </button>
                     </div>
+                    <div class="video-preview-wrapper">
+                        <div style="position:relative; display:inline-block;">
+                            <video id="videoPreview" controls style="display:block;"></video>
+                            <canvas id="overlay" style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
+                        </div>
+                    </div>
+                    <div class="file-details">
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                                    <polyline points="13 2 13 9 20 9" />
+                                </svg>
+                                Filename
+                            </span>
+                            <span id="fileName" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                </svg>
+                                Size
+                            </span>
+                            <span id="fileSize" class="detail-value"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                Duration
+                            </span>
+                            <span id="fileDuration" class="detail-value"></span>
+                        </div>
+                    </div>
+                    <button id="uploadBtn" class="btn btn-primary btn-full">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7" />
+                            <polyline points="7 9 12 4 17 9" />
+                            <line x1="12" y1="4" x2="12" y2="16" />
+                        </svg>
+                        Start Processing
+                    </button>
                 </div>
 
                 <div id="progressSection" class="progress-section" style="display: none;">
@@ -173,7 +162,7 @@
                         <p id="processingStatus">Analyzing video for traffic signs...</p>
                         <div class="processing-info">
                             <div class="info-item">
-                                <span class="info-label">Video URL: </span>
+                                <span class="info-label">Video URL:</span>
                                 <span id="videoId" class="info-value"></span>
                             </div>
                             <div class="info-item">
@@ -185,7 +174,18 @@
                 </div>
             </div>
 
-        </div>
+            <aside class="upload-sidebar">
+                <div class="sidebar-section">
+                    <button id="cameraBtn" class="btn btn-secondary btn-camera">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        Use Camera
+                    </button>
+                </div>
+            </aside>
+        </section>
     </main>
 
     <script src="js/config.js"></script>

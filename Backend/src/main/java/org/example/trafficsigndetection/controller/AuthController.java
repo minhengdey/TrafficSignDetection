@@ -28,7 +28,6 @@ import java.text.ParseException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
     AuthService authService;
-    UserService userService;
 
     @PostMapping(value = "/register")
     public ApiResponse<UserResponse> register(@Valid @RequestBody UserRequest userRequest) {

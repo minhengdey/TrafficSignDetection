@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.util.StringUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -55,10 +54,6 @@ public class VideoProcessingService {
     VideoRepository videoRepository;
     TrafficSignTypeRepository trafficSignTypeRepository;
     ObjectMapper objectMapper;
-
-    @Value("${roboflow.api.url:}")
-    @NonFinal
-    String roboflowApiUrl;
 
     @Value("${roboflow.api.key:}")
     @NonFinal
@@ -126,16 +121,8 @@ public class VideoProcessingService {
                                     String base64Image = Base64.getEncoder().encodeToString(imageBytes); // Mã hóa base64
 
                                     // Lấy đường dẫn endpoint API roboflow để gửi ảnh lên để dêtct
-                                    String detectUrl;
-                                    if (StringUtils.hasText(roboflowApiUrl)) {
-                                        detectUrl = roboflowApiUrl.contains("api_key=")
-                                                ? roboflowApiUrl
-                                                : roboflowApiUrl + (roboflowApiUrl.contains("?") ? "&" : "?")
-                                                        + "api_key=" + roboflowApiKey;
-                                    } else {
-                                        detectUrl = String.format("https://detect.roboflow.com/%s/%s?api_key=%s",
-                                                roboflowModel, roboflowVersion, roboflowApiKey);
-                                    }
+                                    String detectUrl = String.format("https://detect.roboflow.com/%s/%s?api_key=%s",
+                                            roboflowModel, roboflowVersion, roboflowApiKey);
 
                                     // Tạo header và gửi ảnh lên API roboflow nhận diện
                                     HttpHeaders headers = new HttpHeaders();
@@ -145,7 +132,7 @@ public class VideoProcessingService {
                                             String.class);
                                     detectionJson = response.getBody(); // Kết quả trả về dạng JSON
 
-                                    log.info("detection json: {}", detectionJson);
+                                    log.info("Detection json: {}", detectionJson);
                                 } catch (Exception e) {
                                 }
 
