@@ -1,27 +1,10 @@
-// Statistics page functionality
 document.addEventListener("DOMContentLoaded", async () => {
     if (window.auth && typeof window.auth.init === 'function') await window.auth.init()
 
-    // Check authentication
     if (!window.auth.isAuthenticated()) {
         window.location.href = "login.html"
         return
     }
-
-    // Update auth link - removed; navbar is handled by nav.js
-    // const authLink = document.getElementById("authLink")
-    // if (typeof auth !== "undefined" && auth.isAuthenticated()) {
-    //   authLink.textContent = "Logout"
-    //   authLink.addEventListener("click", (e) => {
-    //     e.preventDefault()
-    //     auth.logout()
-    //   })
-    // } else {
-    //   authLink.textContent = "Login"
-    //   authLink.href = "login.html"
-    // }
-
-    // Elements
     const timeRangeFilter = document.getElementById("timeRangeFilter")
     const totalVideos = document.getElementById("totalVideos")
     const totalDetections = document.getElementById("totalDetections")
@@ -33,13 +16,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const signsChange = document.getElementById("signsChange")
     const activityList = document.getElementById("activityList")
 
-    // Chart instances
     let detectionsChart = null
     let signTypesChart = null
     let confidenceChart = null
     let processingChart = null
 
-    // Load statistics
     loadStatistics()
 
     async function loadStatistics() {
@@ -47,85 +28,66 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
             let statsData = null
+            if (!(window.auth && typeof window.auth.isAdmin === 'function' && window.auth.isAdmin())) {
+                showStatsError('Insufficient permissions to view statistics. Admin role required.')
+                return
+            }
 
-            if (CONFIG.MODE === "MOCK") {
-                statsData = generateMockStats(timeRange)
-            } else {
-                // In LIVE mode, backend exposes admin stats under /api/admin/stats/* and requires ADMIN role.
-                // Only call admin endpoints if user is admin; otherwise surface permission error.
-                if (!(window.auth && typeof window.auth.isAdmin === 'function' && window.auth.isAdmin())) {
-                    // Show friendly message instead of throwing so UI can render guidance
-                    showStatsError('Insufficient permissions to view statistics. Admin role required.')
-                    return
-                }
+            const endpoints = CONFIG.ENDPOINTS || {}
+            const overviewPath = endpoints.ADMIN_STATS_OVERVIEW || endpoints.STATS || '/api/admin/stats/overview'
+            const detectionsPath = endpoints.ADMIN_STATS_DETECTIONS_OVER_TIME || '/api/admin/stats/detections-over-time'
+            const topSignsPath = endpoints.ADMIN_STATS_TOP_SIGNS || '/api/admin/stats/top-signs'
+            const videosByStatusPath = endpoints.ADMIN_STATS_VIDEOS_BY_STATUS || '/api/admin/stats/videos-by-status'
 
-                // Fetch admin stats endpoints in parallel
-                const endpoints = CONFIG.ENDPOINTS || {}
-                // Use configured admin endpoints when available; fall back to hardcoded admin paths
-                const overviewPath = endpoints.ADMIN_STATS_OVERVIEW || endpoints.STATS || '/api/admin/stats/overview'
-                const detectionsPath = endpoints.ADMIN_STATS_DETECTIONS_OVER_TIME || '/api/admin/stats/detections-over-time'
-                const topSignsPath = endpoints.ADMIN_STATS_TOP_SIGNS || '/api/admin/stats/top-signs'
-                const videosByStatusPath = endpoints.ADMIN_STATS_VIDEOS_BY_STATUS || '/api/admin/stats/videos-by-status'
+            const urls = [overviewPath, detectionsPath, topSignsPath, videosByStatusPath].map(p => `${CONFIG.API_BASE_URL}${p}`)
 
-                const urls = [overviewPath, detectionsPath, topSignsPath, videosByStatusPath].map(p => `${CONFIG.API_BASE_URL}${p}`)
+            const responses = await Promise.all(urls.map(u => fetch(u + `?range=${timeRange}`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })))
 
-                const responses = await Promise.all(urls.map(u => fetch(u + `?range=${timeRange}`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })))
-
-                // check for any 403/401 early
-                for (const r of responses) {
-                    if (!r.ok) {
-                        if (r.status === 403 || r.status === 401) {
-                            showStatsError('Insufficient permissions to view statistics (server returned 403). Please login as admin.')
-                            return
-                        }
-                        showStatsError('Failed to load stats from server (status ' + r.status + ')')
+            for (const r of responses) {
+                if (!r.ok) {
+                    if (r.status === 403 || r.status === 401) {
+                        showStatsError('Insufficient permissions to view statistics (server returned 403). Please login as admin.')
                         return
                     }
-                }
-
-                const payloads = await Promise.all(responses.map(r => r.json().catch(() => ({}))))
-
-                const overview = payloads[0] && (payloads[0].result || payloads[0])
-                const detectionsOverTime = payloads[1] && (payloads[1].result || payloads[1])
-                const topSigns = payloads[2] && (payloads[2].result || payloads[2])
-                const videosByStatus = payloads[3] && (payloads[3].result || payloads[3])
-
-                // Normalize into the statsData shape expected by the page
-                // AdminStatsService returns simple maps. Map them into the frontend conventions.
-                statsData = {
-                    summary: {
-                        totalVideos: overview && Number(overview.totalVideos) ? Number(overview.totalVideos) : 0,
-                        totalDetections: overview && Number(overview.totalDetections) ? Number(overview.totalDetections) : 0,
-                        // avgConfidence not provided by backend; show 0 as placeholder
-                        avgConfidence: overview && Number(overview.avgConfidence) ? Number(overview.avgConfidence) : 0,
-                        uniqueSigns: overview && Number(overview.totalSignTypes) ? Number(overview.totalSignTypes) : 0,
-                        changes: {
-                            videos: 0,
-                            detections: 0,
-                            confidence: 0,
-                        },
-                    },
-                    charts: {
-                        // detectionsOverTime -> { labels: [], values: [] }
-                        dailyData: (detectionsOverTime && Array.isArray(detectionsOverTime.labels) && Array.isArray(detectionsOverTime.values))
-                            ? detectionsOverTime.labels.map((label, i) => ({ date: label, detections: detectionsOverTime.values[i] || 0 }))
-                            : [],
-                        // topSigns -> { labels: [], values: [] } -> convert to object { LABEL: count }
-                        signTypes: (topSigns && Array.isArray(topSigns.labels) && Array.isArray(topSigns.values))
-                            ? topSigns.labels.reduce((acc, lbl, i) => { acc[lbl] = topSigns.values[i] || 0; return acc }, {})
-                            : {},
-                        // confidenceDistribution not provided by AdminStatsService
-                        confidenceDistribution: {},
-                        // videosByStatus -> { labels: [], values: [] } -> this is NOT processing time; keep as status chart data
-                        processingTime: [],
-                        videosByStatus: (videosByStatus && Array.isArray(videosByStatus.labels) && Array.isArray(videosByStatus.values))
-                            ? { labels: videosByStatus.labels, values: videosByStatus.values }
-                            : { labels: [], values: [] },
-                    },
-                    recentActivity: [],
+                    showStatsError('Failed to load stats from server (status ' + r.status + ')')
+                    return
                 }
             }
 
+            const payloads = await Promise.all(responses.map(r => r.json().catch(() => ({}))))
+
+            const overview = payloads[0] && (payloads[0].result || payloads[0])
+            const detectionsOverTime = payloads[1] && (payloads[1].result || payloads[1])
+            const topSigns = payloads[2] && (payloads[2].result || payloads[2])
+            const videosByStatus = payloads[3] && (payloads[3].result || payloads[3])
+
+            statsData = {
+                summary: {
+                    totalVideos: overview && Number(overview.totalVideos) ? Number(overview.totalVideos) : 0,
+                    totalDetections: overview && Number(overview.totalDetections) ? Number(overview.totalDetections) : 0,
+                    avgConfidence: overview && Number(overview.avgConfidence) ? Number(overview.avgConfidence) : 0,
+                    uniqueSigns: overview && Number(overview.totalSignTypes) ? Number(overview.totalSignTypes) : 0,
+                    changes: {
+                        videos: 0,
+                        detections: 0,
+                        confidence: 0,
+                    },
+                },
+                charts: {
+                    dailyData: (detectionsOverTime && Array.isArray(detectionsOverTime.labels) && Array.isArray(detectionsOverTime.values))
+                        ? detectionsOverTime.labels.map((label, i) => ({ date: label, detections: detectionsOverTime.values[i] || 0 }))
+                        : [],
+                    signTypes: (topSigns && Array.isArray(topSigns.labels) && Array.isArray(topSigns.values))
+                        ? topSigns.labels.reduce((acc, lbl, i) => { acc[lbl] = topSigns.values[i] || 0; return acc }, {})
+                        : {},
+                    confidenceDistribution: {},
+                    processingTime: [],
+                    videosByStatus: (videosByStatus && Array.isArray(videosByStatus.labels) && Array.isArray(videosByStatus.values))
+                        ? { labels: videosByStatus.labels, values: videosByStatus.values }
+                        : { labels: [], values: [] },
+                },
+                recentActivity: [],
+            }
             updateSummaryCards(statsData.summary)
             renderCharts(statsData.charts)
             renderActivity(statsData.recentActivity)
@@ -134,112 +96,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Generate mock statistics
-    function generateMockStats(timeRange) {
-        const days = timeRange === "all" ? 90 : Number.parseInt(timeRange)
-
-        // Generate daily data
-        const dailyData = []
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date()
-            date.setDate(date.getDate() - i)
-            dailyData.push({
-                date: date.toISOString().split("T")[0],
-                detections: Math.floor(Math.random() * 50) + 20,
-                videos: Math.floor(Math.random() * 5) + 1,
-            })
-        }
-
-        // Sign types data
-        const signTypes = {
-            STOP: 145,
-            SPEED_LIMIT_50: 132,
-            YIELD: 98,
-            NO_ENTRY: 87,
-            ONE_WAY: 76,
-            PEDESTRIAN_CROSSING: 65,
-            TURN_RIGHT: 54,
-            PARKING: 43,
-        }
-
-        // Confidence distribution
-        const confidenceDistribution = {
-            "90-100%": 420,
-            "80-90%": 280,
-            "70-80%": 150,
-            "60-70%": 80,
-            "Below 60%": 30,
-        }
-
-        // Processing time data
-        const processingTime = []
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date()
-            date.setDate(date.getDate() - i)
-            processingTime.push({
-                date: date.toISOString().split("T")[0],
-                avgTime: Math.random() * 30 + 15,
-            })
-        }
-
-        // Recent activity
-        const recentActivity = [
-            {
-                id: 1,
-                type: "video_processed",
-                filename: "highway_traffic.mp4",
-                detections: 23,
-                timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-            },
-            {
-                id: 2,
-                type: "video_processed",
-                filename: "city_intersection.mp4",
-                detections: 18,
-                timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-            },
-            {
-                id: 3,
-                type: "video_processed",
-                filename: "suburban_road.mp4",
-                detections: 12,
-                timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-            },
-            {
-                id: 4,
-                type: "video_processed",
-                filename: "parking_lot.mp4",
-                detections: 8,
-                timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-            },
-        ]
-
-        const totalDetections = dailyData.reduce((sum, d) => sum + d.detections, 0)
-        const totalVideos = dailyData.reduce((sum, d) => sum + d.videos, 0)
-
-        return {
-            summary: {
-                totalVideos: totalVideos,
-                totalDetections: totalDetections,
-                avgConfidence: 87,
-                uniqueSigns: Object.keys(signTypes).length,
-                changes: {
-                    videos: 12,
-                    detections: 18,
-                    confidence: 3,
-                },
-            },
-            charts: {
-                dailyData,
-                signTypes,
-                confidenceDistribution,
-                processingTime,
-            },
-            recentActivity,
-        }
-    }
-
-    // Update summary cards
     function updateSummaryCards(summary) {
         totalVideos.textContent = summary.totalVideos.toLocaleString()
         totalDetections.textContent = summary.totalDetections.toLocaleString()
@@ -251,21 +107,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         confidenceChange.textContent = `+${summary.changes.confidence}%`
     }
 
-    // Render charts
     function renderCharts(chartsData) {
-        // Destroy existing charts
         if (detectionsChart) detectionsChart.destroy()
         if (signTypesChart) signTypesChart.destroy()
         if (confidenceChart) confidenceChart.destroy()
         if (processingChart) processingChart.destroy()
 
-        // Chart.js default config
         const chartDefaults = {
             color: getComputedStyle(document.documentElement).getPropertyValue("--text-secondary").trim(),
             borderColor: getComputedStyle(document.documentElement).getPropertyValue("--border-color").trim(),
         }
 
-        // Detections Over Time Chart
         const detectionsCtx = document.getElementById("detectionsChart").getContext("2d")
         detectionsChart = new window.Chart(detectionsCtx, {
             type: "line",
@@ -306,7 +158,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             },
         })
 
-        // Sign Types Chart
         const signTypesCtx = document.getElementById("signTypesChart").getContext("2d")
         signTypesChart = new window.Chart(signTypesCtx, {
             type: "doughnut",
@@ -330,7 +181,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             },
         })
 
-        // Confidence Distribution Chart — render only if data present
         if (chartsData.confidenceDistribution && Object.keys(chartsData.confidenceDistribution).length > 0) {
             const confidenceCtx = document.getElementById("confidenceChart").getContext("2d")
             confidenceChart = new window.Chart(confidenceCtx, {
@@ -369,7 +219,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 },
             })
         } else {
-            // clear placeholder or leave empty if no data
             const el = document.getElementById('confidenceChart')
             if (el && el.getContext) {
                 const ctx = el.getContext('2d')
@@ -377,7 +226,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // Processing Time Chart — render only if processingTime has data
         if (chartsData.processingTime && chartsData.processingTime.length > 0) {
             const processingCtx = document.getElementById("processingChart").getContext("2d")
             processingChart = new window.Chart(processingCtx, {
@@ -427,7 +275,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Render activity
     function renderActivity(activities) {
         if (activities.length === 0) {
             activityList.innerHTML = `
@@ -467,7 +314,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             .join("")
     }
 
-    // Time range filter
     timeRangeFilter.addEventListener("change", loadStatistics)
 
     function showStatsError(message) {
@@ -480,7 +326,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           <p>If you are an admin, ensure you are logged in and the backend is running. Check browser DevTools → Network for failing requests.</p>
         </div>
       `
-            // replace main area
             if (container === document.body) container.innerHTML = html
             else container.innerHTML = html
         } catch (e) {
@@ -488,7 +333,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Utility functions
     function formatChartDate(dateString) {
         const date = new Date(dateString)
         return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
