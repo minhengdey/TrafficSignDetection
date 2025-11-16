@@ -11,11 +11,8 @@ import org.example.trafficsigndetection.enums.ErrorCode;
 import org.example.trafficsigndetection.exception.AppException;
 import org.example.trafficsigndetection.service.VideoProcessingService;
 import org.example.trafficsigndetection.service.VideoService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +59,6 @@ public class VideoController {
                     .result(resp)
                     .build();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new AppException(ErrorCode.DETECTION_ERROR);
         }
     }

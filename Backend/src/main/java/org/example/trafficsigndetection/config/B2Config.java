@@ -13,7 +13,6 @@ import java.net.URI;
 
 @Configuration
 public class B2Config {
-
         @Bean
         public S3Client s3Client(Environment env) {
                 String endpoint = env.getProperty("b2.endpoint");
@@ -23,7 +22,7 @@ public class B2Config {
 
                 return S3Client.builder()
                                 .endpointOverride(URI.create(endpoint))
-                                .forcePathStyle(true) // Backblaze B2 requires path-style for many operations
+                                .forcePathStyle(true)
                                 .credentialsProvider(StaticCredentialsProvider.create(
                                                 AwsBasicCredentials.create(accessKey, secretKey)))
                                 .region(Region.of(region))

@@ -10,23 +10,15 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.io.InputStream;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class B2Service {
-
     S3Client s3;
-    S3Presigner presigner;
 
     @NonFinal
     @Value("${b2.bucket}")
@@ -52,21 +44,6 @@ public class B2Service {
     public String getObjectUrl(String key) {
         String normalizedEndpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         return normalizedEndpoint + "/" + bucket + "/" + key;
-    }
-
-    public String presignGetUrl(String key, Duration validFor) {
-        GetObjectRequest getReq = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        GetObjectPresignRequest presignGetReq = GetObjectPresignRequest.builder()
-                .getObjectRequest(getReq)
-                .signatureDuration(validFor)
-                .build();
-
-        PresignedGetObjectRequest presignedGet = presigner.presignGetObject(presignGetReq);
-        return presignedGet.url().toString();
     }
 
     public void assertBucketAccessible() {

@@ -2,23 +2,33 @@
 
 /* Tab navigation styles: segmented control */
 .tabs {
-    display: inline-flex;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
     border: 1px solid var(--border-color);
     background: var(--bg-card);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    padding: 4px;
+    padding: 6px;
+    margin: 0 auto 1rem auto;
+    max-width: 420px;
 }
 
 .tab-btn {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     border: none;
     background: transparent;
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.1rem;
     cursor: pointer;
     color: var(--text-secondary);
-    font-weight: 600;
-    border-radius: 6px;
-    transition: background-color 0.15s, color 0.15s;
+    font-weight: 700;
+    border-radius: 8px;
+    transition: background-color 0.15s, color 0.15s, transform 0.12s;
+    min-width: 160px;
+    text-align: center;
 }
 
 .tab-btn:hover {
@@ -27,9 +37,38 @@
 }
 
 .tab-btn.active {
-    background: var(--gradient-blue);
+    background: linear-gradient(90deg, rgba(37, 99, 235, 1) 0%, rgba(99, 102, 241, 1) 100%);
     color: var(--muted-white);
-    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+    transform: translateY(-2px);
+}
+
+/* Card adjustments for a cleaner centered layout */
+.auth-card {
+    padding: 1.75rem;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    border-radius: 12px;
+}
+
+/* Make the primary action buttons match width and alignment */
+.auth-form .btn-full {
+    display: inline-block;
+    min-width: 220px;
+    max-width: 100%;
+    margin: 0.6rem auto 0 auto;
+}
+
+@media (max-width: 520px) {
+    .tab-btn {
+        min-width: 46%;
+        padding: 0.5rem;
+    }
+
+    .tabs {
+        max-width: 100%;
+        gap: 0.5rem;
+        padding: 6px;
+    }
 }
 
 /* Make buttons look consistent with .btn-full layout when needed */

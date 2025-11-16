@@ -1,14 +1,4 @@
-// Use global CONFIG if provided by `js/config.js`, otherwise fall back to these defaults
-const APP_CONFIG = (typeof CONFIG !== 'undefined' && CONFIG) ? CONFIG : {
-  MODE: "MOCK",
-  API_BASE_URL: "https://api.example.com",
-  ENDPOINTS: {
-    LOGIN: "/login",
-    REGISTER: "/register",
-  },
-}
-
-// No mock data: always use live API. APP_CONFIG should be provided by js/config.js
+const APP_CONFIG = CONFIG
 
 class AuthManager {
   constructor() {
@@ -17,7 +7,6 @@ class AuthManager {
   }
 
   isAuthenticated() {
-    // Chỉ kiểm tra trạng thái xác thực từ biến instance (this._user)
     return !!this._user;
   }
 
